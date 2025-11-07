@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../state/app_state.dart';
 import '../widgets/app_header.dart';
+import '../widgets/bottom_sheets.dart';
 import '../widgets/project_selector.dart';
 import '../widgets/recent_note_list.dart';
 
@@ -266,63 +267,66 @@ class _QuickActionsRow extends StatelessWidget {
   }
 
   Future<void> _openProjectCreation(BuildContext context) async {
-    await showModalBottomSheet<void>(
-      isScrollControlled: true,
+    await AppBottomSheet.showCustom<void>(
       context: context,
-      builder: (context) => const ProjectCreationSheet(),
+      child: const ProjectCreationSheet(),
     );
   }
 
   Future<void> _openTextNoteComposer(BuildContext context) async {
     final controller = TextEditingController();
     final theme = Theme.of(context);
-    final result = await showModalBottomSheet<String>(
-      isScrollControlled: true,
+    final result = await AppBottomSheet.showCustom<String>(
       context: context,
-      builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-            left: 20,
-            right: 20,
-            top: 24,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Quick text note',
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+          const SizedBox(height: 20),
+          TextField(
+            controller: controller,
+            maxLines: 5,
+            autofocus: true,
+            decoration: InputDecoration(
+              hintText:
+                  'Type anything. Markdown formatting is supported in the full build.',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              filled: true,
+              fillColor: theme.colorScheme.surfaceContainerHighest
+                  .withValues(alpha: 0.3),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Row(
             children: [
-              Text('Quick text note', style: theme.textTheme.titleMedium),
-              const SizedBox(height: 12),
-              TextField(
-                controller: controller,
-                maxLines: 5,
-                autofocus: true,
-                decoration: const InputDecoration(
-                  hintText:
-                      'Type anything. Markdown formatting is supported in the full build.',
-                  border: OutlineInputBorder(),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: AppBottomSheet.outlinedButtonStyle(context),
+                  child: const Text('Cancel'),
                 ),
               ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Cancel'),
-                  ),
-                  const SizedBox(width: 12),
-                  FilledButton(
-                    onPressed: () =>
-                        Navigator.of(context).pop(controller.text.trim()),
-                    child: const Text('Save to queue'),
-                  ),
-                ],
+              const SizedBox(width: 12),
+              Expanded(
+                child: FilledButton(
+                  onPressed: () =>
+                      Navigator.of(context).pop(controller.text.trim()),
+                  style: AppBottomSheet.filledButtonStyle(context),
+                  child: const Text('Save to queue'),
+                ),
               ),
             ],
           ),
-        );
-      },
+        ],
+      ),
     );
 
     if (!context.mounted) return;
@@ -339,70 +343,79 @@ class _QuickActionsRow extends StatelessWidget {
   Future<void> _showOcrMock(BuildContext context) async {
     final theme = Theme.of(context);
     bool includeImage = true;
-    final result = await showModalBottomSheet<bool>(
+    final result = await AppBottomSheet.showCustom<bool>(
       context: context,
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
-          child: Column(
+      child: StatefulBuilder(
+        builder: (context, setModalState) {
+          return Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Mock OCR preview', style: theme.textTheme.titleMedium),
-              const SizedBox(height: 12),
+              Text(
+                'Mock OCR preview',
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 20),
               Container(
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.surface,
-                  borderRadius: BorderRadius.circular(16),
+                  color: theme.colorScheme.surfaceContainerHighest
+                      .withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(18),
                   border: Border.all(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                    color: theme.colorScheme.outline.withValues(alpha: 0.2),
                   ),
                 ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 14,
-                ),
+                padding: const EdgeInsets.all(16),
                 child: const Text(
                   '"Sketch prototype for widgets. Add undo banner after processing. Consider haptic feedback variants."',
                 ),
               ),
-              const SizedBox(height: 16),
-              StatefulBuilder(
-                builder: (context, setModalState) {
-                  return Row(
-                    children: [
-                      Checkbox(
-                        value: includeImage,
-                        onChanged: (value) {
-                          setModalState(() {
-                            includeImage = value ?? true;
-                          });
-                        },
-                      ),
-                      const Text('Include image in doc'),
-                    ],
-                  );
-                },
-              ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
               Row(
-                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(false),
-                    child: const Text('Discard'),
+                  Checkbox(
+                    value: includeImage,
+                    onChanged: (value) {
+                      setModalState(() {
+                        includeImage = value ?? true;
+                      });
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Include image in doc',
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.of(context).pop(false),
+                      style: AppBottomSheet.outlinedButtonStyle(context),
+                      child: const Text('Discard'),
+                    ),
                   ),
                   const SizedBox(width: 12),
-                  FilledButton(
-                    onPressed: () => Navigator.of(context).pop(includeImage),
-                    child: const Text('Save'),
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: () => Navigator.of(context).pop(includeImage),
+                      style: AppBottomSheet.filledButtonStyle(context),
+                      child: const Text('Save'),
+                    ),
                   ),
                 ],
               ),
             ],
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
 
     if (!context.mounted) return;
@@ -429,29 +442,44 @@ class _QuickActionsRow extends StatelessWidget {
 
   Future<void> _showMultiImportMock(BuildContext context) async {
     final theme = Theme.of(context);
-    await showModalBottomSheet<void>(
+    await AppBottomSheet.showCustom<void>(
       context: context,
-      builder: (context) => Padding(
-        padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Bulk import (mock)', style: theme.textTheme.titleMedium),
-            const SizedBox(height: 12),
-            Text(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Bulk import (mock)',
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceContainerHighest
+                  .withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Text(
               'In production you would step through each photo, tweak OCR, and choose whether to keep the image.',
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
+                height: 1.5,
               ),
             ),
-            const SizedBox(height: 16),
-            FilledButton(
+          ),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
               onPressed: () => Navigator.of(context).pop(),
+              style: AppBottomSheet.filledButtonStyle(context),
               child: const Text('Simulate import'),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
 
@@ -659,18 +687,17 @@ class _ProjectCreationSheetState extends State<ProjectCreationSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-        left: 20,
-        right: 20,
-        top: 24,
-      ),
+    return SingleChildScrollView(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Create new project', style: theme.textTheme.titleMedium),
+          Text(
+            'Create new project',
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: 16),
 
           // Project Type Dropdown
@@ -679,8 +706,11 @@ class _ProjectCreationSheetState extends State<ProjectCreationSheet> {
             decoration: InputDecoration(
               labelText: 'Project Type',
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
               ),
+              filled: true,
+              fillColor: theme.colorScheme.surfaceContainerHighest
+                  .withValues(alpha: 0.3),
               prefixIcon: const Icon(Icons.category),
             ),
             items: _projectTypes.map((type) {
@@ -716,8 +746,11 @@ class _ProjectCreationSheetState extends State<ProjectCreationSheet> {
             decoration: InputDecoration(
               labelText: 'Project Name',
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
               ),
+              filled: true,
+              fillColor: theme.colorScheme.surfaceContainerHighest
+                  .withValues(alpha: 0.3),
               prefixIcon: const Icon(Icons.label),
               hintText: 'Enter project name',
               counterText: '${_nameController.text.length}/20',
@@ -734,8 +767,11 @@ class _ProjectCreationSheetState extends State<ProjectCreationSheet> {
               decoration: InputDecoration(
                 labelText: 'Description',
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(16),
                 ),
+                filled: true,
+                fillColor: theme.colorScheme.surfaceContainerHighest
+                    .withValues(alpha: 0.3),
                 prefixIcon: const Icon(Icons.description),
                 hintText: _selectedType == 'Dev Project'
                     ? 'Describe your project context'
@@ -750,23 +786,29 @@ class _ProjectCreationSheetState extends State<ProjectCreationSheet> {
           ],
 
           // Action Buttons
+          const SizedBox(height: 8),
           Row(
-            mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Cancel'),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: AppBottomSheet.outlinedButtonStyle(context),
+                  child: const Text('Cancel'),
+                ),
               ),
               const SizedBox(width: 12),
-              FilledButton(
-                onPressed: _isCreating || !_canCreate ? null : _createProject,
-                child: _isCreating
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('Create Project'),
+              Expanded(
+                child: FilledButton(
+                  onPressed: _isCreating || !_canCreate ? null : _createProject,
+                  style: AppBottomSheet.filledButtonStyle(context),
+                  child: _isCreating
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Create Project'),
+                ),
               ),
             ],
           ),

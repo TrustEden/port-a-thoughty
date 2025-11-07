@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../models/project.dart';
 import '../state/app_state.dart';
+import 'bottom_sheets.dart';
 
 class ProjectSelector extends StatelessWidget {
   const ProjectSelector({super.key});
@@ -94,10 +95,9 @@ class ProjectSelector extends StatelessWidget {
                   const Spacer(),
                   InkWell(
                     onTap: () {
-                      showModalBottomSheet<void>(
-                        isScrollControlled: true,
+                      AppBottomSheet.showCustom<void>(
                         context: context,
-                        builder: (context) => _ProjectManagementSheet(
+                        child: _ProjectManagementSheet(
                           projects: projects,
                           activeProject: active,
                         ),
@@ -241,18 +241,17 @@ class _ProjectManagementSheetState extends State<_ProjectManagementSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-        left: 20,
-        right: 20,
-        top: 24,
-      ),
+    return SingleChildScrollView(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Manage Projects', style: theme.textTheme.titleMedium),
+          Text(
+            'Manage Projects',
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: 16),
 
           // Project Dropdown
@@ -261,8 +260,11 @@ class _ProjectManagementSheetState extends State<_ProjectManagementSheet> {
             decoration: InputDecoration(
               labelText: 'Select Project',
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
               ),
+              filled: true,
+              fillColor: theme.colorScheme.surfaceContainerHighest
+                  .withValues(alpha: 0.3),
               prefixIcon: const Icon(Icons.folder),
             ),
             items: widget.projects
@@ -283,8 +285,11 @@ class _ProjectManagementSheetState extends State<_ProjectManagementSheet> {
             decoration: InputDecoration(
               labelText: 'Project Name',
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
               ),
+              filled: true,
+              fillColor: theme.colorScheme.surfaceContainerHighest
+                  .withValues(alpha: 0.3),
               prefixIcon: const Icon(Icons.label),
             ),
             maxLength: 20,
@@ -297,8 +302,11 @@ class _ProjectManagementSheetState extends State<_ProjectManagementSheet> {
             decoration: InputDecoration(
               labelText: 'Project Type',
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
               ),
+              filled: true,
+              fillColor: theme.colorScheme.surfaceContainerHighest
+                  .withValues(alpha: 0.3),
               prefixIcon: const Icon(Icons.category),
             ),
             items: _projectTypes
@@ -323,8 +331,11 @@ class _ProjectManagementSheetState extends State<_ProjectManagementSheet> {
             decoration: InputDecoration(
               labelText: 'Description',
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
               ),
+              filled: true,
+              fillColor: theme.colorScheme.surfaceContainerHighest
+                  .withValues(alpha: 0.3),
               prefixIcon: const Icon(Icons.description),
               hintText: 'Project context and details',
               helperText: 'Helps you and AI understand this project',
@@ -335,25 +346,31 @@ class _ProjectManagementSheetState extends State<_ProjectManagementSheet> {
           const SizedBox(height: 16),
 
           // Action Buttons
+          const SizedBox(height: 8),
           Row(
-            mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Cancel'),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: AppBottomSheet.outlinedButtonStyle(context),
+                  child: const Text('Cancel'),
+                ),
               ),
               const SizedBox(width: 12),
-              FilledButton(
-                onPressed: () {
-                  // TODO: Implement save functionality
-                  Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Project updates coming soon!'),
-                    ),
-                  );
-                },
-                child: const Text('Save Changes'),
+              Expanded(
+                child: FilledButton(
+                  onPressed: () {
+                    // TODO: Implement save functionality
+                    Navigator.of(context).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Project updates coming soon!'),
+                      ),
+                    );
+                  },
+                  style: AppBottomSheet.filledButtonStyle(context),
+                  child: const Text('Save Changes'),
+                ),
               ),
             ],
           ),

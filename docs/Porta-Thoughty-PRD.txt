@@ -1,0 +1,330 @@
+PORTA-THOUGHTY
+"Some ideas are shit — keep ’em off the floor."
+Voice & Idea Capture App – MVP Specification
+
+------------------------------------------------------------
+OVERVIEW
+------------------------------------------------------------
+Porta-Thoughty is a fast, private, and intelligent voice-and-idea capture system designed to eliminate friction between inspiration and organization. 
+Users can instantly record, type, or photograph their thoughts, then later process them into structured Markdown lists using an AI model. 
+The app’s core design principle: capture first, clean later.
+
+------------------------------------------------------------
+CORE PRINCIPLES
+------------------------------------------------------------
+1. **Speed:** One-tap capture from widgets or in-app controls.
+2. **Privacy:** No audio storage; local encryption for all data.
+3. **Organization:** AI-assisted consolidation into clean Markdown documents.
+4. **Simplicity:** Minimal screens, minimal decisions, no unnecessary steps.
+
+------------------------------------------------------------
+PLATFORM & FRAMEWORK
+------------------------------------------------------------
+- Target Platform: Android (12+; 2022+ devices)
+- Framework: React Native or Flutter (cross-platform ready)
+- Backend: Local-first architecture (no backend required for MVP)
+- AI Providers: Groq Llama 3 (default), OpenAI/Anthropic (optional via key)
+
+------------------------------------------------------------
+CAPTURE METHODS
+------------------------------------------------------------
+
+### 1. Voice Capture
+**Widget:**
+- 1×1 per project.
+- Tap once → Start recording (haptic + tone feedback)
+- Tap again OR 30s of silence → Stop, transcribe, discard audio, toast “Saved to {project}”
+- Foreground service ensures recording reliability across Android OEMs.
+- On crash/interruption → create stub note: “Recording interrupted at HH:MM.”
+
+**In-App Recorder:**
+- Full-screen with waveform + timer.
+- Same 30s cap + silence detection.
+- Optional real-time transcription (toggle in settings).
+
+**Transcription:**
+- Native Speech to text
+- Temporary audio buffers deleted immediately after text returned.
+- Latency goal: <2s after stop.
+
+------------------------------------------------------------
+TEXT INPUT
+------------------------------------------------------------
+- Quick “Add Text Note” option in each project.
+- Supports Markdown syntax (optional toggle for formatting preview).
+- Saves directly to the local notes queue.
+
+------------------------------------------------------------
+IMAGE CAPTURE + OCR
+------------------------------------------------------------
+Users can capture or upload photos of handwritten notes, whiteboards, or screens, and the app will extract editable text via OCR.
+
+**Capture Options:**
+- Take Photo (camera)
+- Choose from Gallery (multi-select up to 10 images)
+
+**Processing Flow:**
+1. Auto-OCR runs immediately (Google ML Kit or equivalent).
+2. EXIF data stripped; orientation corrected; saved as encrypted JPEG (~85% quality).
+3. OCR preview displayed (read-only) with three actions:
+   - **Save** → quick-save text-only note (image deleted post-process)
+   - **Edit OCR** → opens editable OCR + “Include image in doc” checkbox (checked by default)
+   - **Discard** → cancels capture
+
+**Include Image Logic:**
+- No edit → image not kept.
+- OCR edited or no text detected → checkbox appears (checked by default).
+- Checked → image included in final doc (copied to doc assets + Markdown reference).
+- Unchecked → image deleted post-process.
+
+**Multi-Image Import:**
+- Sequential confirmation pop-ups for each image:
+  - Thumbnail + 2-line OCR preview
+  - [ ] Include image in final doc (default per rules)
+  - Buttons: Edit OCR / Confirm
+  - Optional “Apply to remaining” toggle.
+- After final confirmation → toast “Imported N photos.”
+
+------------------------------------------------------------
+DATA MODEL (LOCAL)
+------------------------------------------------------------
+**Tables:**
+- projects(id, name, color, icon, prompt_text, created, updated)
+- notes(id, project_id, text, type, image_path, ocr_original, ocr_edited, caption, include_image_pref, created, is_processed)
+- docs(id, project_id, title, markdown_path, item_count, created, prompt_hash)
+- settings(default_model, groq_key?, openai_key?, anthropic_key?, silence_timeout, max_note_ms)
+
+**File Layout:**
+/Android/data/<app_id>/projects/<slug>/
+  docs/<timestamp>-consolidated.md
+  assets/<doc_id>/ (if include_image = true)
+
+------------------------------------------------------------
+PROCESSING & ORGANIZATION
+------------------------------------------------------------
+- Multi-select notes → “Process Selected”
+- Sends selected text to LLM with project-specific prompt context.
+- LLM returns single Markdown doc.
+- After saving: removes processed notes from queue.
+
+**LLM Prompt (Backlog Mode):**
+> You are an expert product manager organizing idea fragments for Porta-Thoughty. Convert short, unstructured thoughts into concise, actionable Markdown items. Maintain fidelity to the original notes; never invent features.
+
+**Output Example:**
+# Porta-Thoughty — Consolidated Notes (YYYY-MM-DD)
+- **Title** — Short 1–2 sentence expansion. #tag1 #tag2
+
+**Front Matter (optional):**
+---
+project: Porta-Thoughty
+created: <ISO8601>
+items: <count>
+prompt: <prompt_id>
+---
+
+------------------------------------------------------------
+EXPORT & SHARING
+------------------------------------------------------------
+- Export to Markdown file (.md).
+- Copy Markdown to clipboard.
+- Android share sheet (compatible with Drive, Docs, Notion, GitHub mobile, etc.).
+- If images included → export assets folder with relative links.
+- Data remains encrypted locally until explicitly shared.
+
+------------------------------------------------------------
+PRIVACY & SECURITY
+------------------------------------------------------------
+- Audio and image data never transmitted to servers.
+- Only text is sent for LLM processing (HTTPS secured).
+- Local database encrypted (SQLCipher/EncryptedFile).
+- Images stored encrypted; EXIF removed.
+- API keys securely stored in Android Keystore.
+- Simple, transparent privacy policy.
+
+------------------------------------------------------------
+SETTINGS
+------------------------------------------------------------
+- Default Model: Groq Llama 3
+- Optional: OpenAI / Anthropic API keys
+- Download/remove Whisper pack
+- Toggle tone & haptic feedback
+- Auto-run OCR toggle
+- Export all docs as ZIP
+- Dark mode (adaptive)
+
+------------------------------------------------------------
+PERFORMANCE TARGETS
+------------------------------------------------------------
+- Record start latency: <500ms
+- Stop → transcription: <2s
+- Batch process: ≤60 notes per request (auto-split beyond)
+- Multi-image import (10 photos): <15s typical
+- Widget responsiveness: <500ms
+
+------------------------------------------------------------
+UI COPY & MESSAGING
+------------------------------------------------------------
+Toasts:
+- “Recording…”
+- “Saved to {Project}”
+- “Saved as text note.”
+- “Imported N photos.”
+- “Transcribed successfully.”
+- “No text detected — edit or include image.”
+
+Errors:
+- “Couldn’t transcribe (saved draft).”
+- “Low storage — image not kept.”
+
+------------------------------------------------------------
+TEST PLAN (MVP VALIDATION)
+------------------------------------------------------------
+1. Widget responsiveness across OEMs (Samsung, Pixel, OnePlus).
+2. Transcription accuracy under 30s speech.
+3. OCR accuracy on mixed handwriting/print text.
+4. Process >50 notes without crash; auto-split verified.
+5. Export Markdown opens correctly in Notion, VS Code, Drive.
+6. Voice + photo capture offline; LLM processing deferred until reconnect.
+7. Verify encryption at rest (open DB returns unreadable).
+
+------------------------------------------------------------
+FUTURE EXPANSIONS
+------------------------------------------------------------
+- Tag search and filter.
+- Custom prompt templates.
+- Cloud sync (Supabase / GitHub / Drive).
+- Cross-platform iOS build.
+- Concept Mode (creative grouping) vs Backlog Mode (developer-ready).
+- AI summarization of idea history.
+- Team collaboration and shared projects.
+
+------------------------------------------------------------
+END OF SPEC
+------------------------------------------------------------
+
+
+# PORTA-THOUGHTY – MVP SPEC ADDENDUM
+## Critical Fixes (Must-Have Before Launch)
+
+### 1. Soft-Delete + Undo After Processing
+```diff
+- After saving: removes processed notes from queue.
++ After saving: marks as `is_processed = true`, hides from UI, keeps for 7 days.
++ Add “Undo Process” (last doc only) in Docs view.
++ Optional: “Archive” tab for processed raw notes.
+```
+*DB change:* `notes.is_processed (bool)`, `notes.deleted_at (datetime null)`
+
+---
+
+### 2. Global Quick-Capture Widget + Project Picker
+```diff
++ Add 1×1 “Quick Capture” widget (global)
++ Tap → modal project picker (searchable) → record
++ Long-press widget → choose default project
+```
+*Keep per-project widgets as optional power-user feature.*
+
+---
+
+### 3. Use Android Photo Picker (Android 14+ Compliance)
+```diff
+- Choose from Gallery (multi-select up to 10 images)
++ Use Android Photo Picker API (multi-select, no permissions)
++ Fallback: legacy intent for Android 12–13 only
+```
+
+---
+
+## High-Impact Polish (Add in <1 Week)
+
+### 4. Configurable Silence Auto-Stop
+```diff
++ Settings → “Silence auto-stop: 5s / 8s / 15s / 30s / Off” (default 8s)
++ Optional: “Hold-to-record” mode (like WhatsApp)
+```
+
+---
+
+### 5. Low-Confidence Transcription Handling
+```diff
++ If Whisper confidence < 60% → save encrypted audio stub (7-day expiry)
++ UI: “Low confidence — re-transcribe?” [Play] [Edit] [Delete]
+```
+
+---
+
+### 6. Smarter Image Inclusion Logic
+```diff
++ Default: **Do not include image** if OCR was edited
++ Prompt “Include image?” only if:
+  - No text detected, OR
+  - OCR confidence < 70%, OR
+  - ML Kit label = “drawing” / “diagram”
+```
+
+---
+
+### 7. Full-Text Search (SQLite FTS5)
+```diff
++ Enable FTS5 virtual table on `notes.text` + `ocr_edited`
++ Add global search bar in Projects list (filter current project)
+```
+
+---
+
+### 8. Onboarding & Empty State
+```diff
++ First launch:
+  1. Welcome: “Tap mic to capture a thought. We’ll clean it later.”
+  2. Auto-create “Inbox” project
+  3. Nudge: “Add widget for 1-tap capture”
+```
+
+---
+
+### 9. LLM Token Safety
+```diff
++ Estimate tokens locally before send (~100 tokens/note)
++ Auto-chunk by context limit
++ Warn if >40 notes: “Large batch — may take 20s”
++ Optional: show cost estimate if API key used
+```
+
+---
+
+### 10. Rate Limit / API Key Protection
+```diff
++ Local token estimator → warn: “~1,200 tokens ($0.03) — continue?”
++ Optional: cap free usage (10K tokens/month without key)
+```
+
+---
+
+## <1-Day Delight Wins
+
+```diff
++ Auto-title docs from first note or LLM summary
++ Haptic feedback on record start/stop
++ Swipe note → [Process] [Delete] [Edit]
++ Project badge: “N captured” (live count)
+```
+
+---
+
+## Final Checklist (Copy-Paste into Notion/TODO)
+
+- [ ] Add `is_processed`, `deleted_at` to notes table
+- [ ] Implement 7-day soft-delete + Undo button
+- [ ] Build global Quick Capture widget + project picker
+- [ ] Replace gallery intent with Photo Picker API
+- [ ] Add silence timeout setting (default 8s)
+- [ ] Save low-confidence audio stubs (encrypted)
+- [ ] Smart image inclusion logic
+- [ ] Enable FTS5 search index
+- [ ] 3-screen onboarding flow
+- [ ] Token estimator + batch warnings
+
+---
+Ship it. 🚀
+

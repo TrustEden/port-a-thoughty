@@ -1,0 +1,304 @@
+import 'dart:io';
+
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
+import 'package:sqflite/sqflite.dart' as sqflite;
+import 'package:sqflite_common_ffi/sqflite_ffi.dart' as sqflite_ffi;
+import 'package:flutter/material.dart';
+
+import '../models/note.dart';
+import '../models/processed_doc.dart';
+import '../models/project.dart';
+import '../models/user_settings.dart';
+
+class LocalDatabase {
+  LocalDatabase();
+
+  sqflite.Database? _db;
+
+  Future<void> init() async {
+    if (_db != null) return;
+
+    if (!Platform.isAndroid && !Platform.isIOS) {
+      sqflite_ffi.sqfliteFfiInit();
+      sqflite.databaseFactory = sqflite_ffi.databaseFactoryFfi;
+    }
+
+    final supportDir = await getApplicationSupportDirectory();
+    final dbPath = p.join(supportDir.path, 'porta_thoughty.db');
+    final database = await sqflite.openDatabase(
+      dbPath,
+      version: 1,
+      onCreate: (db, version) async {
+        await db.execute('''
+          CREATE TABLE projects(
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            color INTEGER NOT NULL,
+            icon_code_point INTEGER,
+            icon_font_family TEXT,
+            prompt TEXT,
+            created_at INTEGER NOT NULL,
+            updated_at INTEGER NOT NULL
+          )
+        ''');
+        await db.execute('''
+          CREATE TABLE notes(
+            id TEXT PRIMARY KEY,
+            project_id TEXT NOT NULL,
+            type TEXT NOT NULL,
+            text TEXT NOT NULL,
+            image_label TEXT,
+            include_image INTEGER NOT NULL DEFAULT 0,
+            created_at INTEGER NOT NULL,
+            flagged_low_confidence INTEGER NOT NULL DEFAULT 0,
+            is_processed INTEGER NOT NULL DEFAULT 0,
+            deleted_at INTEGER,
+            FOREIGN KEY(project_id) REFERENCES projects(id)
+          )
+        ''');
+        await db.execute('''
+          CREATE TABLE docs(
+            id TEXT PRIMARY KEY,
+            project_id TEXT NOT NULL,
+            title TEXT NOT NULL,
+            markdown_path TEXT,
+            summary TEXT,
+            source_note_ids TEXT,
+            prompt_hash TEXT,
+            created_at INTEGER NOT NULL,
+            FOREIGN KEY(project_id) REFERENCES projects(id)
+          )
+        ''');
+        await db.execute(
+          'CREATE INDEX idx_notes_project ON notes(project_id, is_processed)',
+        );
+        await db.execute(
+          'CREATE INDEX idx_docs_project ON docs(project_id, created_at)',
+        );
+        await db.execute('''
+          CREATE TABLE settings(
+            key TEXT PRIMARY KEY,
+            value TEXT NOT NULL
+          )
+        ''');
+      },
+    );
+    _db = database;
+    await _ensureSchema(database);
+  }
+
+  Future<Project> ensureDefaultProject() async {
+    final db = _requireDb();
+    final countResult = await db.rawQuery(
+      'SELECT COUNT(*) as count FROM projects',
+    );
+    final count = countResult.isNotEmpty
+        ? (countResult.first['count'] as int? ?? 0)
+        : 0;
+    if (count > 0) {
+      final projects = await fetchProjects();
+      return projects.first;
+    }
+
+    final now = DateTime.now();
+    final inbox = Project(
+      id: 'inbox',
+      name: 'Inbox',
+      color: const Color(0xFF4A53FF),
+      icon: Icons.inbox_outlined,
+      prompt:
+          'Organize these raw thoughts into actionable bullet points. Group similar ideas and highlight follow-ups.',
+      createdAt: now,
+      updatedAt: now,
+    );
+    await insertProject(inbox);
+    return inbox;
+  }
+
+  Future<void> insertProject(Project project) async {
+    final db = _requireDb();
+    await db.insert(
+      'projects',
+      project.toMap(),
+      conflictAlgorithm: sqflite.ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<List<Project>> fetchProjects() async {
+    final db = _requireDb();
+    final maps = await db.query('projects', orderBy: 'created_at ASC');
+    return maps.map(Project.fromMap).toList();
+  }
+
+  Future<List<Note>> fetchActiveNotes(String projectId) async {
+    final db = _requireDb();
+    final maps = await db.query(
+      'notes',
+      where: 'project_id = ? AND is_processed = 0 AND deleted_at IS NULL',
+      whereArgs: [projectId],
+      orderBy: 'created_at DESC',
+    );
+    return maps.map(Note.fromMap).toList();
+  }
+
+  Future<List<ProcessedDoc>> fetchDocs(String projectId) async {
+    final db = _requireDb();
+    final maps = await db.query(
+      'docs',
+      where: 'project_id = ?',
+      whereArgs: [projectId],
+      orderBy: 'created_at DESC',
+    );
+    return maps.map(ProcessedDoc.fromMap).toList();
+  }
+
+  Future<void> insertNote(Note note) async {
+    final db = _requireDb();
+    await db.insert(
+      'notes',
+      note.toMap(),
+      conflictAlgorithm: sqflite.ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<void> insertNotes(List<Note> notes) async {
+    final db = _requireDb();
+    final batch = db.batch();
+    for (final note in notes) {
+      batch.insert(
+        'notes',
+        note.toMap(),
+        conflictAlgorithm: sqflite.ConflictAlgorithm.replace,
+      );
+    }
+    await batch.commit(noResult: true);
+  }
+
+  Future<void> setNotesProcessed(
+    List<String> ids, {
+    required bool processed,
+  }) async {
+    if (ids.isEmpty) return;
+    final db = _requireDb();
+    final batch = db.batch();
+    for (final id in ids) {
+      batch.update(
+        'notes',
+        {
+          'is_processed': processed ? 1 : 0,
+          'deleted_at': processed
+              ? DateTime.now().millisecondsSinceEpoch
+              : null,
+        },
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+    }
+    await batch.commit(noResult: true);
+  }
+
+  Future<void> insertDoc(ProcessedDoc doc) async {
+    final db = _requireDb();
+    await db.insert(
+      'docs',
+      doc.toMap(),
+      conflictAlgorithm: sqflite.ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<void> deleteDoc(String id) async {
+    final db = _requireDb();
+    await db.delete('docs', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<List<Note>> fetchNotesByIds(List<String> ids) async {
+    if (ids.isEmpty) return const [];
+    final db = _requireDb();
+    final placeholders = List.filled(ids.length, '?').join(',');
+    final maps = await db.rawQuery(
+      'SELECT * FROM notes WHERE id IN ($placeholders)',
+      ids,
+    );
+    return maps.map(Note.fromMap).toList();
+  }
+
+  Future<void> updateNote(Note note) async {
+    final db = _requireDb();
+    await db.update(
+      'notes',
+      note.toMap(),
+      where: 'id = ?',
+      whereArgs: [note.id],
+    );
+  }
+
+  Future<void> softDeleteNote(String id) async {
+    final db = _requireDb();
+    await db.update(
+      'notes',
+      {'deleted_at': DateTime.now().millisecondsSinceEpoch},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<void> restoreNote(String id) async {
+    final db = _requireDb();
+    await db.update(
+      'notes',
+      {'deleted_at': null},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<UserSettings> loadSettings() async {
+    final db = _requireDb();
+    final rows = await db.query('settings');
+    if (rows.isEmpty) {
+      const defaults = UserSettings();
+      await saveSettings(defaults);
+      return defaults;
+    }
+    final map = <String, String>{};
+    for (final row in rows) {
+      final key = row['key'] as String?;
+      final value = row['value'] as String?;
+      if (key != null && value != null) {
+        map[key] = value;
+      }
+    }
+    return UserSettings.fromStorage(map);
+  }
+
+  Future<void> saveSettings(UserSettings settings) async {
+    final db = _requireDb();
+    final batch = db.batch();
+    final map = settings.toStorage();
+    map.forEach((key, value) {
+      batch.insert('settings', {
+        'key': key,
+        'value': value,
+      }, conflictAlgorithm: sqflite.ConflictAlgorithm.replace);
+    });
+    await batch.commit(noResult: true);
+  }
+
+  sqflite.Database _requireDb() {
+    final db = _db;
+    if (db == null) {
+      throw StateError('Database has not been initialized.');
+    }
+    return db;
+  }
+
+  Future<void> _ensureSchema(sqflite.Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS settings(
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+      )
+    ''');
+  }
+}

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../models/note.dart';
 import '../state/app_state.dart';
 import '../widgets/app_header.dart';
+import '../widgets/bottom_sheets.dart';
 import '../widgets/project_selector.dart';
 
 class QueueScreen extends StatelessWidget {
@@ -176,37 +177,74 @@ class QueueScreen extends StatelessWidget {
         '${project.name} Notes - ${_formatDate(DateTime.now())}';
     final controller = TextEditingController(text: suggestedTitle);
 
-    final result = await showDialog<String?>(
+    final result = await showModalBottomSheet<String?>(
       context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (context) {
-        return AlertDialog(
-          title: Row(
-            children: [
-              const Icon(Icons.auto_mode),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'Process ${selectedNotes.length} note${selectedNotes.length == 1 ? '' : 's'}',
-                ),
+        return Container(
+          margin: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x26000000),
+                blurRadius: 40,
+                offset: Offset(0, 20),
               ),
             ],
           ),
-          content: SingleChildScrollView(
-            child: SizedBox(
-              width: MediaQuery.of(context).size.width * 0.9,
+          child: SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  TextFormField(
-                    controller: controller,
-                    decoration: const InputDecoration(
-                      labelText: 'Document title',
-                      border: OutlineInputBorder(),
-                    ),
-                    autofocus: true,
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Icon(
+                          Icons.auto_mode,
+                          size: 28,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Text(
+                          'Process ${selectedNotes.length} note${selectedNotes.length == 1 ? '' : 's'}',
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleLarge
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 24),
+                  TextField(
+                    controller: controller,
+                    decoration: InputDecoration(
+                      labelText: 'Document title',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      filled: true,
+                      fillColor: Theme.of(context)
+                          .colorScheme
+                          .surfaceContainerHighest
+                          .withValues(alpha: 0.3),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
                   Text(
                     'Preview',
                     style: Theme.of(context)
@@ -215,20 +253,29 @@ class QueueScreen extends StatelessWidget {
                         ?.copyWith(fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 12),
-                  SizedBox(
-                    height: ((selectedNotes.length * 76).clamp(160, 320)).toDouble(),
+                  ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxHeight: MediaQuery.of(context).size.height * 0.3,
+                    ),
                     child: ListView.separated(
+                      shrinkWrap: true,
                       itemCount: selectedNotes.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      separatorBuilder: (_, __) => const SizedBox(height: 10),
                       itemBuilder: (context, index) {
                         final note = selectedNotes[index];
                         return Container(
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.9),
+                            color: Theme.of(context)
+                                .colorScheme
+                                .surfaceContainerHighest
+                                .withValues(alpha: 0.5),
                             borderRadius: BorderRadius.circular(18),
                             border: Border.all(
-                              color: Colors.black.withValues(alpha: 0.05),
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .outline
+                                  .withValues(alpha: 0.2),
                             ),
                           ),
                           child: Row(
@@ -237,20 +284,18 @@ class QueueScreen extends StatelessWidget {
                               Icon(
                                 _noteIcon(note.type),
                                 color: Theme.of(context).colorScheme.primary,
+                                size: 20,
                               ),
                               const SizedBox(width: 12),
                               Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      note.preview,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodyMedium
-                                          ?.copyWith(fontWeight: FontWeight.w600),
-                                    ),
-                                  ],
+                                child: Text(
+                                  note.preview,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(fontWeight: FontWeight.w600),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                             ],
@@ -259,25 +304,67 @@ class QueueScreen extends StatelessWidget {
                       },
                     ),
                   ),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 20),
                   Text(
                     'Processing will call the configured model and save a Markdown summary while keeping the raw notes available for undo.',
-                    style: Theme.of(context).textTheme.bodySmall,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          height: 1.5,
+                        ),
+                  ),
+                  const SizedBox(height: 28),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.of(context).pop(null),
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size.fromHeight(52),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            side: BorderSide(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .outline
+                                  .withValues(alpha: 0.5),
+                            ),
+                          ),
+                          child: const Text(
+                            'Cancel',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: FilledButton(
+                          onPressed: () =>
+                              Navigator.of(context).pop(controller.text.trim()),
+                          style: FilledButton.styleFrom(
+                            minimumSize: const Size.fromHeight(52),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: const Text(
+                            'Process now',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(null),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(controller.text.trim()),
-              child: const Text('Process now'),
-            ),
-          ],
         );
       },
     );
@@ -327,7 +414,7 @@ class _QueueNoteCard extends StatelessWidget {
       curve: Curves.easeInOut,
       margin: const EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.86),
+        color: Colors.white.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(26),
         border: Border.all(
           color: selected ? theme.colorScheme.primary : Colors.transparent,
@@ -519,7 +606,7 @@ class _EmptyQueuePlaceholder extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 40, 24, 46),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.8),
+        color: Colors.white.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(28),
         border: Border.all(
           color: theme.colorScheme.primary.withValues(alpha: 0.1),

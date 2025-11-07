@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../models/note.dart';
 import '../state/app_state.dart';
+import 'bottom_sheets.dart';
 
 class RecentNoteList extends StatelessWidget {
   const RecentNoteList({super.key, required this.notes});
@@ -33,14 +34,7 @@ class _RecentNoteTile extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.white.withValues(alpha: 0.92),
-            Colors.white.withValues(alpha: 0.78),
-          ],
-        ),
+        color: Colors.white.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(26),
         boxShadow: const [
           BoxShadow(
@@ -236,7 +230,7 @@ class _NoteAvatar extends StatelessWidget {
       height: 62,
       width: 62,
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.88),
+        color: color.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Center(child: icon),
@@ -347,22 +341,13 @@ class _NoteOptionsMenu extends StatelessWidget {
   }
 
   Future<bool> _confirmDelete(BuildContext context) async {
-    return await showDialog<bool>(
+    return await AppBottomSheet.showConfirmation(
           context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Delete note?'),
-            content: const Text('This action cannot be undone.'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('Cancel'),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.of(context).pop(true),
-                child: const Text('Delete'),
-              ),
-            ],
-          ),
+          title: 'Delete note?',
+          message: 'This action cannot be undone.',
+          confirmLabel: 'Delete',
+          icon: Icons.delete_outline,
+          isDestructive: true,
         ) ??
         false;
   }
@@ -372,32 +357,129 @@ class _NoteOptionsMenu extends StatelessWidget {
     PortaThoughtyState state,
   ) async {
     final projects = state.projects;
-    return await showDialog<String>(
+    return await showModalBottomSheet<String>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Move to project'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: projects
-              .map(
-                (project) => ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: project.color.withValues(alpha: 0.2),
-                    foregroundColor: project.color,
-                    child: Icon(project.icon ?? Icons.folder),
-                  ),
-                  title: Text(project.name),
-                  onTap: () => Navigator.of(context).pop(project.id),
-                ),
-              )
-              .toList(),
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        margin: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x26000000),
+              blurRadius: 40,
+              offset: Offset(0, 20),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: Icon(
+                        Icons.drive_file_move_outlined,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Move to project',
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleLarge
+                            ?.copyWith(fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                ...projects.map(
+                  (project) => Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .surfaceContainerHighest
+                          .withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(16),
+                      onTap: () => Navigator.of(context).pop(project.id),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              backgroundColor:
+                                  project.color.withValues(alpha: 0.2),
+                              foregroundColor: project.color,
+                              child: Icon(project.icon ?? Icons.folder),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Text(
+                                project.name,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyLarge
+                                    ?.copyWith(fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                            Icon(
+                              Icons.chevron_right,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(52),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      side: BorderSide(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .outline
+                            .withValues(alpha: 0.5),
+                      ),
+                    ),
+                    child: const Text(
+                      'Cancel',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -412,7 +494,7 @@ class _EmptyRecent extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 36),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.78),
+        color: Colors.white.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(26),
         border: Border.all(
           color: theme.colorScheme.primary.withValues(alpha: 0.12),

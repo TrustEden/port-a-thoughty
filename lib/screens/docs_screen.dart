@@ -7,6 +7,7 @@ import 'package:share_plus/share_plus.dart';
 import '../models/processed_doc.dart';
 import '../state/app_state.dart';
 import '../widgets/app_header.dart';
+import '../widgets/bottom_sheets.dart';
 import '../widgets/project_selector.dart';
 
 class DocsScreen extends StatelessWidget {
@@ -100,6 +101,7 @@ class DocsScreen extends StatelessWidget {
     return showModalBottomSheet<void>(
       isScrollControlled: true,
       context: context,
+      backgroundColor: Colors.transparent,
       builder: (context) {
         return FutureBuilder<String?>(
           future: _loadMarkdown(doc.markdownPath),
@@ -109,111 +111,183 @@ class DocsScreen extends StatelessWidget {
             final loading = snapshot.connectionState == ConnectionState.waiting;
             final hasContent = (content?.trim().isNotEmpty ?? false);
 
-            return SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(Icons.article_outlined),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              doc.title,
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                          ),
-                          Text(
-                            _dateLabel(doc.createdAt),
-                            style: Theme.of(context).textTheme.labelMedium,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Key bullet points',
-                        style: Theme.of(context).textTheme.labelLarge,
-                      ),
-                      const SizedBox(height: 12),
-                      if (doc.summary.isEmpty)
-                        Text(
-                          'Summary preview not available.',
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        )
-                      else
-                        ...doc.summary.map(
-                          (line) => Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text('- '),
-                                Expanded(
-                                  child: Text(
-                                    line,
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.bodyMedium,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      const SizedBox(height: 24),
-                      Text(
-                        'Markdown export',
-                        style: Theme.of(context).textTheme.labelLarge,
-                      ),
-                      const SizedBox(height: 12),
-                      if (loading)
-                        const Center(child: CircularProgressIndicator())
-                      else if (error != null)
-                        Text(
-                          'Could not load Markdown: $error',
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(
-                                color: Theme.of(context).colorScheme.error,
+            return Container(
+              margin: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(28),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x26000000),
+                    blurRadius: 40,
+                    offset: Offset(0, 20),
+                  ),
+                ],
+              ),
+              child: SafeArea(
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.primaryContainer,
+                                borderRadius: BorderRadius.circular(18),
                               ),
-                        )
-                      else if (!hasContent)
+                              child: Icon(
+                                Icons.article_outlined,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                doc.title,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.copyWith(fontWeight: FontWeight.w700),
+                              ),
+                            ),
+                            Text(
+                              _dateLabel(doc.createdAt),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelMedium
+                                  ?.copyWith(
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                  ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
                         Text(
-                          'Markdown file missing or empty. Try reprocessing the notes.',
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        )
-                      else
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .surfaceContainerHighest
-                                .withValues(alpha: 0.6),
-                            borderRadius: BorderRadius.circular(18),
-                            border: Border.all(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.primary.withValues(alpha: 0.12),
+                          'Key bullet points',
+                          style: Theme.of(context)
+                              .textTheme
+                              .labelLarge
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 12),
+                        if (doc.summary.isEmpty)
+                          Text(
+                            'Summary preview not available.',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          )
+                        else
+                          ...doc.summary.map(
+                            (line) => Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('• '),
+                                  Expanded(
+                                    child: Text(
+                                      line,
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.bodyMedium,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                          child: SelectableText(
-                            content!,
-                            style: Theme.of(context).textTheme.bodyMedium,
+                        const SizedBox(height: 24),
+                        Text(
+                          'Markdown export',
+                          style: Theme.of(context)
+                              .textTheme
+                              .labelLarge
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 12),
+                        if (loading)
+                          const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(24),
+                              child: CircularProgressIndicator(),
+                            ),
+                          )
+                        else if (error != null)
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .errorContainer
+                                  .withValues(alpha: 0.3),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Text(
+                              'Could not load Markdown: $error',
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Theme.of(context).colorScheme.error,
+                                  ),
+                            ),
+                          )
+                        else if (!hasContent)
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerHighest
+                                  .withValues(alpha: 0.3),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Text(
+                              'Markdown file missing or empty. Try reprocessing the notes.',
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                  ),
+                            ),
+                          )
+                        else
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerHighest
+                                  .withValues(alpha: 0.3),
+                              borderRadius: BorderRadius.circular(18),
+                              border: Border.all(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.outline.withValues(alpha: 0.2),
+                              ),
+                            ),
+                            child: SelectableText(
+                              content!,
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ),
+                        const SizedBox(height: 24),
+                        SizedBox(
+                          width: double.infinity,
+                          child: FilledButton.icon(
+                            onPressed: hasContent ? () => _shareDoc(context, doc) : null,
+                            icon: const Icon(Icons.share_outlined),
+                            label: const Text('Share document'),
+                            style: FilledButton.styleFrom(
+                              minimumSize: const Size.fromHeight(52),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
                           ),
                         ),
-                      const SizedBox(height: 20),
-                      OutlinedButton.icon(
-                        onPressed: hasContent
-                            ? () => _shareDoc(context, doc)
-                            : null,
-                        icon: const Icon(Icons.share_outlined),
-                        label: const Text('Share'),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -273,24 +347,14 @@ class DocsScreen extends StatelessWidget {
   }
 
   Future<void> _confirmDeleteDoc(BuildContext context, ProcessedDoc doc) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await AppBottomSheet.showConfirmation(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete document?'),
-        content: Text(
+      title: 'Delete document?',
+      message:
           'This will permanently delete "${doc.title}" and its markdown file. This action cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+      confirmLabel: 'Delete',
+      icon: Icons.delete_outline,
+      isDestructive: true,
     );
 
     if (confirmed == true && context.mounted) {
@@ -307,35 +371,96 @@ class DocsScreen extends StatelessWidget {
   Future<void> _showTokenEstimator(BuildContext context) {
     return showModalBottomSheet<void>(
       context: context,
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Token & API safeguards',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'In the production build this panel would:\n'
-                '- Estimate tokens before sending to Groq/OpenAI\n'
-                '- Warn if a batch exceeds the context window\n'
-                '- Show cost projections when API keys are configured\n'
-                '- Offer a local cap for anonymous usage',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 20),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Close'),
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        margin: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x26000000),
+              blurRadius: 40,
+              offset: Offset(0, 20),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: Icon(
+                        Icons.shield_outlined,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Token & API safeguards',
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleLarge
+                            ?.copyWith(fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
+                const SizedBox(height: 20),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .surfaceContainerHighest
+                        .withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(
+                    'In the production build this panel would:\n\n'
+                    '• Estimate tokens before sending to Groq/OpenAI\n'
+                    '• Warn if a batch exceeds the context window\n'
+                    '• Show cost projections when API keys are configured\n'
+                    '• Offer a local cap for anonymous usage',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          height: 1.6,
+                        ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(52),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: const Text(
+                      'Got it',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -368,7 +493,7 @@ class _DocCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.86),
+        color: Colors.white.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(26),
         boxShadow: const [
           BoxShadow(
@@ -503,7 +628,7 @@ class _EmptyDocsPlaceholder extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 48),
       padding: const EdgeInsets.fromLTRB(26, 40, 26, 44),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.82),
+        color: Colors.white.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(28),
         border: Border.all(
           color: theme.colorScheme.primary.withValues(alpha: 0.1),

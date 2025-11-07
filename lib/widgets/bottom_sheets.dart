@@ -2,6 +2,43 @@ import 'package:flutter/material.dart';
 
 /// Professional bottom sheet with smooth animations and consistent styling
 class AppBottomSheet {
+  // Standardized button styling constants
+  static const double buttonHeight = 52.0;
+  static const double buttonBorderRadius = 16.0;
+  static const double buttonFontSize = 16.0;
+  static const FontWeight buttonFontWeight = FontWeight.w700;
+
+  /// Standard filled button style for consistency across all bottom sheets
+  static ButtonStyle filledButtonStyle(BuildContext context) {
+    return FilledButton.styleFrom(
+      minimumSize: const Size.fromHeight(buttonHeight),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(buttonBorderRadius),
+      ),
+      textStyle: const TextStyle(
+        fontSize: buttonFontSize,
+        fontWeight: buttonFontWeight,
+      ),
+    );
+  }
+
+  /// Standard outlined button style for consistency across all bottom sheets
+  static ButtonStyle outlinedButtonStyle(BuildContext context) {
+    return OutlinedButton.styleFrom(
+      minimumSize: const Size.fromHeight(buttonHeight),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(buttonBorderRadius),
+      ),
+      side: BorderSide(
+        color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.5),
+      ),
+      textStyle: const TextStyle(
+        fontSize: buttonFontSize,
+        fontWeight: FontWeight.w600,
+      ),
+    );
+  }
+
   /// Shows a confirmation bottom sheet with action buttons
   static Future<bool?> showConfirmation({
     required BuildContext context,
@@ -32,12 +69,18 @@ class AppBottomSheet {
     required BuildContext context,
     required Widget child,
     bool isScrollControlled = true,
+    bool usePadding = true,
+    EdgeInsets? padding,
   }) async {
     return showModalBottomSheet<T>(
       context: context,
       isScrollControlled: isScrollControlled,
       backgroundColor: Colors.transparent,
-      builder: (context) => _CustomBottomSheet(child: child),
+      builder: (context) => _CustomBottomSheet(
+        usePadding: usePadding,
+        padding: padding,
+        child: child,
+      ),
     );
   }
 }
@@ -123,47 +166,27 @@ class _ConfirmationBottomSheet extends StatelessWidget {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () => Navigator.of(context).pop(false),
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(52),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        side: BorderSide(
-                          color: theme.colorScheme.outline.withValues(alpha: 0.5),
-                        ),
-                      ),
-                      child: Text(
-                        cancelLabel,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                      style: AppBottomSheet.outlinedButtonStyle(context),
+                      child: Text(cancelLabel),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: FilledButton(
                       onPressed: () => Navigator.of(context).pop(true),
-                      style: FilledButton.styleFrom(
-                        minimumSize: const Size.fromHeight(52),
-                        backgroundColor: isDestructive
-                            ? theme.colorScheme.error
-                            : theme.colorScheme.primary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                      style: AppBottomSheet.filledButtonStyle(context).copyWith(
+                        backgroundColor: WidgetStateProperty.all(
+                          isDestructive
+                              ? theme.colorScheme.error
+                              : theme.colorScheme.primary,
                         ),
-                      ),
-                      child: Text(
-                        confirmLabel,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: isDestructive
+                        foregroundColor: WidgetStateProperty.all(
+                          isDestructive
                               ? theme.colorScheme.onError
                               : theme.colorScheme.onPrimary,
                         ),
                       ),
+                      child: Text(confirmLabel),
                     ),
                   ),
                 ],
@@ -177,13 +200,25 @@ class _ConfirmationBottomSheet extends StatelessWidget {
 }
 
 class _CustomBottomSheet extends StatelessWidget {
-  const _CustomBottomSheet({required this.child});
+  const _CustomBottomSheet({
+    required this.child,
+    this.usePadding = true,
+    this.padding,
+  });
 
   final Widget child;
+  final bool usePadding;
+  final EdgeInsets? padding;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final defaultPadding = EdgeInsets.only(
+      bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+      left: 24,
+      right: 24,
+      top: 32,
+    );
 
     return Container(
       margin: const EdgeInsets.all(12),
@@ -200,7 +235,12 @@ class _CustomBottomSheet extends StatelessWidget {
       ),
       child: SafeArea(
         top: false,
-        child: child,
+        child: usePadding
+            ? Padding(
+                padding: padding ?? defaultPadding,
+                child: child,
+              )
+            : child,
       ),
     );
   }

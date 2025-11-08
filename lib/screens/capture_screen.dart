@@ -283,56 +283,64 @@ class _QuickActionsRow extends StatelessWidget {
     final result = await showModalBottomSheet<String>(
       isScrollControlled: true,
       context: context,
+      backgroundColor: Colors.transparent,
       builder: (context) {
-        // Calculate safe top padding to keep sheet below header
-        // Header height (~80px) + header padding (24+18=42px) + safe margin (30px) = ~150px
-        final screenHeight = MediaQuery.of(context).size.height;
-        final safeTopPadding = MediaQuery.of(context).padding.top;
-        final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
-        final minTopMargin = safeTopPadding + 150.0; // Keep below header
-
-        return SafeArea(
-          top: false,
-          child: Padding(
-            padding: EdgeInsets.only(
-              bottom: keyboardHeight + 20,
-              left: 20,
-              right: 20,
-              top: minTopMargin,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Quick text note', style: theme.textTheme.titleMedium),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: controller,
-                  maxLines: 5,
-                  autofocus: true,
-                  decoration: const InputDecoration(
-                    hintText:
-                        'Type anything. Markdown formatting is supported in the full build.',
-                    border: OutlineInputBorder(),
+        return Container(
+          margin: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x26000000),
+                blurRadius: 40,
+                offset: Offset(0, 20),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            top: false,
+            child: Padding(
+              padding: EdgeInsets.only(
+                left: 24,
+                right: 24,
+                top: 32,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Quick text note', style: theme.textTheme.titleMedium),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: controller,
+                    maxLines: 5,
+                    autofocus: true,
+                    decoration: const InputDecoration(
+                      hintText:
+                          'Type anything. Markdown formatting is supported in the full build.',
+                      border: OutlineInputBorder(),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: const Text('Cancel'),
-                    ),
-                    const SizedBox(width: 12),
-                    FilledButton(
-                      onPressed: () =>
-                          Navigator.of(context).pop(controller.text.trim()),
-                      child: const Text('Save to queue'),
-                    ),
-                  ],
-                ),
-              ],
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: const Text('Cancel'),
+                      ),
+                      const SizedBox(width: 12),
+                      FilledButton(
+                        onPressed: () =>
+                            Navigator.of(context).pop(controller.text.trim()),
+                        child: const Text('Save to queue'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         );

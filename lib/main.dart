@@ -179,9 +179,21 @@ class _FixedHeader extends StatelessWidget {
       'Your processed documents, ready to share and review.',
     ];
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 18),
-      child: AppHeader(subtitle: subtitles[currentIndex]),
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            AppTheme.backgroundGradient[0],
+            AppTheme.backgroundGradient[0].withValues(alpha: 0.95),
+          ],
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 24, 20, 18),
+        child: AppHeader(subtitle: subtitles[currentIndex]),
+      ),
     );
   }
 }

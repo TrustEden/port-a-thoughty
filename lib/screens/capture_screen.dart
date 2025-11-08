@@ -256,7 +256,7 @@ class _QuickActionsRow extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: _QuickActionButton(
-                imageAsset: 'assets/newproject.png',
+                imageAsset: 'assets/splashscreen.png',
                 label: 'New project',
                 onTap: () => _openProjectCreation(context),
                 width: 36,
@@ -625,8 +625,8 @@ class _QuickActionButton extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             SizedBox(
-              width: 44,
-              height: 44,
+              width: width > 44 ? width : 44,
+              height: height > 44 ? height : 44,
               child: Center(
                 child: Image.asset(
                   imageAsset,

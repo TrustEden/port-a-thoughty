@@ -27,16 +27,93 @@ class ProjectSelector extends StatelessWidget {
                 ),
               ],
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-            child: Row(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.folder_open,
+                            size: 16,
+                            color: theme.colorScheme.primary,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Active project',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: theme.colorScheme.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      child: Icon(
+                        Icons.settings,
+                        size: 22,
+                        color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 16),
-                Text('Loading projects...', style: theme.textTheme.bodyMedium),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    Image.asset(
+                      'assets/projectsicon.png',
+                      width: 52,
+                      height: 52,
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surface,
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(
+                            color: theme.colorScheme.primary.withValues(
+                              alpha: 0.12,
+                            ),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              'Loading...',
+                              style: theme.textTheme.bodyMedium,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           );

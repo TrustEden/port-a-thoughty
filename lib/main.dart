@@ -41,20 +41,20 @@ class HomeShell extends StatefulWidget {
 }
 
 class _HomeShellState extends State<HomeShell> {
-  int _index = 0;
+  int _index = 1;
   late PageController _pageController;
   static const platform = MethodChannel('com.example.porta_thoughty/widget'); // Define MethodChannel
 
   static final _destinations = [
     NavigationDestination(
-      icon: Image.asset('assets/capture.png', width: 48, height: 48),
-      selectedIcon: Image.asset('assets/capture.png', width: 48, height: 48),
-      label: 'Capture',
-    ),
-    NavigationDestination(
       icon: Image.asset('assets/queue.png', width: 48, height: 48),
       selectedIcon: Image.asset('assets/queue.png', width: 48, height: 48),
       label: 'Raw Notes',
+    ),
+    NavigationDestination(
+      icon: Image.asset('assets/capture.png', width: 48, height: 48),
+      selectedIcon: Image.asset('assets/capture.png', width: 48, height: 48),
+      label: 'Capture',
     ),
     NavigationDestination(
       icon: Image.asset('assets/docsnotes.png', width: 48, height: 48),
@@ -81,7 +81,7 @@ class _HomeShellState extends State<HomeShell> {
           print('Parsed URI: $uri');
           if (uri.host == 'home_widget' && uri.pathSegments.contains('record')) {
             print('URI matches recording intent. Navigating to CaptureScreen.');
-            _onDestinationSelected(0); // Navigate to CaptureScreen
+            _onDestinationSelected(1); // Navigate to CaptureScreen (now index 1)
             Future.delayed(const Duration(milliseconds: 350), () {
               if (mounted) {
                 print('Delayed execution: context mounted.');
@@ -149,8 +149,7 @@ class _HomeShellState extends State<HomeShell> {
                 child: PageView(
                   controller: _pageController,
                   onPageChanged: _onPageChanged,
-                  physics: const NeverScrollableScrollPhysics(), // Disable swipe
-                  children: const [CaptureScreen(), QueueScreen(), DocsScreen()],
+                  children: const [QueueScreen(), CaptureScreen(), DocsScreen()],
                 ),
               ),
             ],
@@ -175,8 +174,8 @@ class _FixedHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     // Different subtitles for each screen
     final subtitles = [
-      'Capture first, clean later. Porta-Thoughty keeps your brain clear.',
       'Review and select notes to process into organized documents.',
+      'Capture first, clean later. Porta-Thoughty keeps your brain clear.',
       'Your processed documents, ready to share and review.',
     ];
 

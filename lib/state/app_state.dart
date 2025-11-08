@@ -3,6 +3,8 @@ import 'dart:io';
 
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 
 import '../models/note.dart';
 import '../models/processed_doc.dart';
@@ -308,21 +310,71 @@ User notes:''';
   Future<void> addImageNote({
     required String ocrText,
     bool includeImage = true,
+    String? imagePath,
     String? label,
   }) async {
     await _ensureInitialized();
+
+    // Copy image to permanent storage if needed
+    String? permanentImagePath;
+    if (imagePath != null && includeImage) {
+      try {
+        final supportDir = await getApplicationSupportDirectory();
+        final imagesDir = Directory(
+          p.join(supportDir.path, 'projects', _activeProjectId, 'images'),
+        );
+        if (!await imagesDir.exists()) {
+          await imagesDir.create(recursive: true);
+        }
+
+        final timestamp = DateTime.now().millisecondsSinceEpoch;
+        final extension = p.extension(imagePath);
+        final fileName = '$timestamp$extension';
+        final destinationPath = p.join(imagesDir.path, fileName);
+
+        // Copy the image file
+        final sourceFile = File(imagePath);
+        await sourceFile.copy(destinationPath);
+        permanentImagePath = destinationPath;
+
+        // Delete the temp file if it's different from destination
+        if (imagePath != destinationPath) {
+          try {
+            await sourceFile.delete();
+          } catch (_) {
+            // Ignore deletion errors for temp files
+          }
+        }
+      } catch (e) {
+        print('Failed to copy image: $e');
+        // Continue without image if copy fails
+        permanentImagePath = null;
+      }
+    }
+
     final note = Note(
       projectId: _activeProjectId,
       type: NoteType.image,
       text: ocrText,
       createdAt: DateTime.now(),
-      includeImage: includeImage,
+      includeImage: includeImage && permanentImagePath != null,
       imageLabel: label,
+      imagePath: permanentImagePath,
     );
 
     await _database.insertNote(note);
     _notes = [note, ..._notes];
     notifyListeners();
+  }
+
+  Future<void> updateNote(Note note) async {
+    await _ensureInitialized();
+    await _database.updateNote(note);
+    final index = _notes.indexWhere((element) => element.id == note.id);
+    if (index != -1) {
+      _notes[index] = note;
+      notifyListeners();
+    }
   }
 
   Future<bool> deleteNote(Note note) async {

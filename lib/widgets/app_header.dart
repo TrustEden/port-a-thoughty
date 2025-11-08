@@ -30,7 +30,13 @@ class AppHeader extends StatelessWidget {
             ],
           ),
           clipBehavior: Clip.hardEdge,
-          child: Image.asset('assets/mascot.png', fit: BoxFit.cover),
+          child: Image.asset(
+            'assets/mascot.png',
+            fit: BoxFit.cover,
+            cacheWidth: (80 * MediaQuery.of(context).devicePixelRatio).round(),
+            cacheHeight: (80 * MediaQuery.of(context).devicePixelRatio).round(),
+            gaplessPlayback: true,
+          ),
         ),
         const SizedBox(width: 16),
         Expanded(

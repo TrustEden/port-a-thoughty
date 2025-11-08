@@ -8,6 +8,7 @@ import 'screens/docs_screen.dart';
 import 'screens/queue_screen.dart';
 import 'state/app_state.dart';
 import 'theme/app_theme.dart';
+import 'widgets/app_header.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -139,10 +140,20 @@ class _HomeShellState extends State<HomeShell> {
       child: Scaffold(
         backgroundColor: Colors.transparent,
         body: SafeArea(
-          child: PageView(
-            controller: _pageController,
-            onPageChanged: _onPageChanged,
-            children: const [CaptureScreen(), QueueScreen(), DocsScreen()],
+          child: Column(
+            children: [
+              // Fixed header area
+              _FixedHeader(currentIndex: _index),
+              // Scrollable content area
+              Expanded(
+                child: PageView(
+                  controller: _pageController,
+                  onPageChanged: _onPageChanged,
+                  physics: const NeverScrollableScrollPhysics(), // Disable swipe
+                  children: const [CaptureScreen(), QueueScreen(), DocsScreen()],
+                ),
+              ),
+            ],
           ),
         ),
         bottomNavigationBar: NavigationBar(
@@ -151,6 +162,27 @@ class _HomeShellState extends State<HomeShell> {
           destinations: _destinations,
         ),
       ),
+    );
+  }
+}
+
+class _FixedHeader extends StatelessWidget {
+  const _FixedHeader({required this.currentIndex});
+
+  final int currentIndex;
+
+  @override
+  Widget build(BuildContext context) {
+    // Different subtitles for each screen
+    final subtitles = [
+      'Capture first, clean later. Porta-Thoughty keeps your brain clear.',
+      'Review and select notes to process into organized documents.',
+      'Your processed documents, ready to share and review.',
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 18),
+      child: AppHeader(subtitle: subtitles[currentIndex]),
     );
   }
 }

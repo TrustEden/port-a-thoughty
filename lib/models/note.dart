@@ -16,6 +16,7 @@ class Note {
     required this.createdAt,
     this.includeImage = false,
     this.imageLabel,
+    this.imagePath,
     this.isProcessed = false,
     this.flaggedLowConfidence = false,
     this.deletedAt,
@@ -28,6 +29,7 @@ class Note {
   final DateTime createdAt;
   final bool includeImage;
   final String? imageLabel;
+  final String? imagePath;
   final bool isProcessed;
   final bool flaggedLowConfidence;
   final DateTime? deletedAt;
@@ -52,6 +54,7 @@ class Note {
     DateTime? createdAt,
     bool? includeImage,
     String? imageLabel,
+    String? imagePath,
     bool? isProcessed,
     bool? flaggedLowConfidence,
     DateTime? deletedAt,
@@ -64,6 +67,7 @@ class Note {
       createdAt: createdAt ?? this.createdAt,
       includeImage: includeImage ?? this.includeImage,
       imageLabel: imageLabel ?? this.imageLabel,
+      imagePath: imagePath ?? this.imagePath,
       isProcessed: isProcessed ?? this.isProcessed,
       flaggedLowConfidence: flaggedLowConfidence ?? this.flaggedLowConfidence,
       deletedAt: deletedAt ?? this.deletedAt,
@@ -85,6 +89,7 @@ class Note {
       ),
       includeImage: (map['include_image'] as int? ?? 0) == 1,
       imageLabel: map['image_label'] as String?,
+      imagePath: map['image_path'] as String?,
       isProcessed: (map['is_processed'] as int? ?? 0) == 1,
       flaggedLowConfidence: (map['flagged_low_confidence'] as int? ?? 0) == 1,
       deletedAt: _dateFromMillis(map['deleted_at'] as int?),
@@ -100,6 +105,7 @@ class Note {
       'created_at': createdAt.millisecondsSinceEpoch,
       'include_image': includeImage ? 1 : 0,
       'image_label': imageLabel,
+      'image_path': imagePath,
       'is_processed': isProcessed ? 1 : 0,
       'flagged_low_confidence': flaggedLowConfidence ? 1 : 0,
       'deleted_at': deletedAt?.millisecondsSinceEpoch,

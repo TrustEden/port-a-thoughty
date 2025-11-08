@@ -36,12 +36,10 @@ class CaptureScreen extends StatelessWidget {
     }
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 140),
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 140),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const AppHeader(),
-          const SizedBox(height: 18),
           const ProjectSelector(),
           const SizedBox(height: 20),
           _SpeechCaptureCard(state: state),

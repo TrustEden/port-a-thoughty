@@ -28,7 +28,7 @@ class LocalDatabase {
     final dbPath = p.join(supportDir.path, 'porta_thoughty.db');
     final database = await sqflite.openDatabase(
       dbPath,
-      version: 1,
+      version: 2,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE projects(
@@ -49,6 +49,7 @@ class LocalDatabase {
             type TEXT NOT NULL,
             text TEXT NOT NULL,
             image_label TEXT,
+            image_path TEXT,
             include_image INTEGER NOT NULL DEFAULT 0,
             created_at INTEGER NOT NULL,
             flagged_low_confidence INTEGER NOT NULL DEFAULT 0,
@@ -82,6 +83,28 @@ class LocalDatabase {
             value TEXT NOT NULL
           )
         ''');
+      },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          // Add image_path column for storing image file paths
+          // Check if column exists first to avoid duplicate column error
+          final result = await db.rawQuery('PRAGMA table_info(notes)');
+          final hasImagePath = result.any((col) => col['name'] == 'image_path');
+
+          if (!hasImagePath) {
+            await db.execute(
+              'ALTER TABLE notes ADD COLUMN image_path TEXT',
+            );
+          }
+
+          // Add include_image column if it doesn't exist
+          final hasIncludeImage = result.any((col) => col['name'] == 'include_image');
+          if (!hasIncludeImage) {
+            await db.execute(
+              'ALTER TABLE notes ADD COLUMN include_image INTEGER NOT NULL DEFAULT 0',
+            );
+          }
+        }
       },
     );
     _db = database;

@@ -20,11 +20,8 @@ class DocsScreen extends StatelessWidget {
     final lastDoc = state.lastProcessedDoc;
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 140),
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 140),
       children: [
-        const AppHeader(),
-        const SizedBox(height: 18),
-        const ProjectSelector(),
         if (lastDoc != null)
           Container(
             margin: const EdgeInsets.only(top: 20),
@@ -98,24 +95,41 @@ class DocsScreen extends StatelessWidget {
   }
 
   Future<void> _showDocPreview(BuildContext context, ProcessedDoc doc) {
-    return AppBottomSheet.showCustom<void>(
+    return showModalBottomSheet<void>(
+      isScrollControlled: true,
       context: context,
-      usePadding: false,
-      child: FutureBuilder<String?>(
-        future: _loadMarkdown(doc.markdownPath),
-        builder: (context, snapshot) {
-          final content = snapshot.data;
-          final error = snapshot.error;
-          final loading = snapshot.connectionState == ConnectionState.waiting;
-          final hasContent = (content?.trim().isNotEmpty ?? false);
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return FutureBuilder<String?>(
+          future: _loadMarkdown(doc.markdownPath),
+          builder: (context, snapshot) {
+            final content = snapshot.data;
+            final error = snapshot.error;
+            final loading = snapshot.connectionState == ConnectionState.waiting;
+            final hasContent = (content?.trim().isNotEmpty ?? false);
 
-          return Padding(
-            padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+            return Container(
+              margin: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(28),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x26000000),
+                    blurRadius: 40,
+                    offset: Offset(0, 20),
+                  ),
+                ],
+              ),
+              child: SafeArea(
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
                           children: [
                             Container(
                               padding: const EdgeInsets.all(12),
@@ -254,22 +268,30 @@ class DocsScreen extends StatelessWidget {
                               style: Theme.of(context).textTheme.bodyMedium,
                             ),
                           ),
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton.icon(
-                      onPressed: hasContent ? () => _shareDoc(context, doc) : null,
-                      icon: const Icon(Icons.share_outlined),
-                      label: const Text('Share document'),
-                      style: AppBottomSheet.filledButtonStyle(context),
+                        const SizedBox(height: 24),
+                        SizedBox(
+                          width: double.infinity,
+                          child: FilledButton.icon(
+                            onPressed: hasContent ? () => _shareDoc(context, doc) : null,
+                            icon: const Icon(Icons.share_outlined),
+                            label: const Text('Share document'),
+                            style: FilledButton.styleFrom(
+                              minimumSize: const Size.fromHeight(52),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
+                ),
               ),
-            ),
-          );
-        },
-      ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -344,37 +366,55 @@ class DocsScreen extends StatelessWidget {
   }
 
   Future<void> _showTokenEstimator(BuildContext context) {
-    return AppBottomSheet.showCustom<void>(
+    return showModalBottomSheet<void>(
       context: context,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(18),
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        margin: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x26000000),
+              blurRadius: 40,
+              offset: Offset(0, 20),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: Icon(
+                        Icons.shield_outlined,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Token & API safeguards',
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleLarge
+                            ?.copyWith(fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                  ],
                 ),
-                child: Icon(
-                  Icons.shield_outlined,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'Token & API safeguards',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleLarge
-                      ?.copyWith(fontWeight: FontWeight.w700),
-                ),
-              ),
-            ],
-          ),
                 const SizedBox(height: 20),
                 Container(
                   padding: const EdgeInsets.all(16),
@@ -396,16 +436,30 @@ class DocsScreen extends StatelessWidget {
                         ),
                   ),
                 ),
-          const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              onPressed: () => Navigator.of(context).pop(),
-              style: AppBottomSheet.filledButtonStyle(context),
-              child: const Text('Got it'),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(52),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: const Text(
+                      'Got it',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }

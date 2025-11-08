@@ -110,13 +110,38 @@ class DocGenerator {
       NoteType.text => 'Text',
       NoteType.image => 'Image',
     };
+
+    // For image notes with embedded images, show the image first
+    if (note.type == NoteType.image && note.includeImage && note.imagePath != null) {
+      final imageFile = File(note.imagePath!);
+      if (imageFile.existsSync()) {
+        // Use absolute path for the image
+        buffer.writeln('- [$label]');
+        buffer.writeln();
+        buffer.writeln('  ![${note.imageLabel ?? 'Captured image'}](${note.imagePath})');
+        buffer.writeln();
+      }
+    }
+
     final lines = _normalizeLines(note.text);
     if (lines.isEmpty) {
-      buffer.writeln('- [$label] (No transcription captured)');
+      if (note.type != NoteType.image || !note.includeImage) {
+        buffer.writeln('- [$label] (No transcription captured)');
+      }
     } else {
-      buffer.writeln('- [$label] ${lines.first}');
-      for (final line in lines.skip(1)) {
-        buffer.writeln('  $line');
+      if (note.type == NoteType.image && note.includeImage && note.imagePath != null) {
+        // Text after image
+        buffer.writeln('  **Extracted Text:**');
+        buffer.writeln();
+        for (final line in lines) {
+          buffer.writeln('  $line');
+        }
+      } else {
+        // Normal text display
+        buffer.writeln('- [$label] ${lines.first}');
+        for (final line in lines.skip(1)) {
+          buffer.writeln('  $line');
+        }
       }
     }
 
@@ -130,11 +155,13 @@ class DocGenerator {
         }
         break;
       case NoteType.image:
-        metadata.add(
-          note.includeImage
-              ? 'Image kept${note.imageLabel != null ? ' (${note.imageLabel})' : ''}'
-              : 'Image discarded after OCR',
-        );
+        if (note.includeImage) {
+          metadata.add(
+            'Image included${note.imageLabel != null ? ' (${note.imageLabel})' : ''}',
+          );
+        } else {
+          metadata.add('Image discarded after OCR');
+        }
         break;
       case NoteType.text:
         // No extra metadata for plain text captures (yet).

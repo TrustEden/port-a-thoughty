@@ -46,13 +46,7 @@ A Flutter mobile app for capturing fleeting thoughts through voice, text, and im
 <table>
   <tr>
     <td><img src="docs/Screenshot_20251107_115245.png" width="250"/></td>
-    <td><img src="docs/Screenshot_20251107_152905.png" width="250"/></td>
-  </tr>
-  <tr>
-    <td align="center"><b>Queue Screen</b><br/>Note selection & processing</td>
-    <td align="center"><b>Capture Actions</b><br/>Multi-modal input options</td>
-  </tr>
-</table>
+    
 
 ## 🏗️ Architecture
 

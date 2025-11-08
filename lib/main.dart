@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart'; // Import for MethodChannel
+import 'package:receive_sharing_intent/receive_sharing_intent.dart';
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 
 import 'screens/capture_screen.dart';
 import 'screens/docs_screen.dart';
@@ -44,6 +48,8 @@ class _HomeShellState extends State<HomeShell> {
   int _index = 1;
   late PageController _pageController;
   static const platform = MethodChannel('com.example.porta_thoughty/widget'); // Define MethodChannel
+  StreamSubscription? _intentDataStreamSubscription;
+  StreamSubscription? _intentMediaStreamSubscription;
 
   static final _destinations = [
     NavigationDestination(
@@ -68,6 +74,7 @@ class _HomeShellState extends State<HomeShell> {
     super.initState();
     _pageController = PageController(initialPage: _index);
     _setupMethodChannel(); // Setup MethodChannel listener
+    _initSharingListener(); // Setup share intent listeners
   }
 
   void _setupMethodChannel() {
@@ -107,9 +114,129 @@ class _HomeShellState extends State<HomeShell> {
     });
   }
 
+  void _initSharingListener() {
+    // Handle text shared from other apps while app is running
+    _intentDataStreamSubscription = ReceiveSharingIntent.instance.getTextStream().listen(
+      (String value) {
+        print('Received shared text: $value');
+        _handleSharedText(value);
+      },
+      onError: (err) {
+        print('Error receiving shared text: $err');
+      },
+    );
+
+    // Handle media (images) shared from other apps while app is running
+    _intentMediaStreamSubscription = ReceiveSharingIntent.instance.getMediaStream().listen(
+      (List<SharedMediaFile> value) {
+        print('Received shared media: ${value.length} files');
+        _handleSharedMedia(value);
+      },
+      onError: (err) {
+        print('Error receiving shared media: $err');
+      },
+    );
+
+    // Handle text shared when app was closed/not running
+    ReceiveSharingIntent.instance.getInitialText().then((String? value) {
+      if (value != null) {
+        print('Received initial shared text: $value');
+        _handleSharedText(value);
+      }
+    });
+
+    // Handle media shared when app was closed/not running
+    ReceiveSharingIntent.instance.getInitialMedia().then((List<SharedMediaFile> value) {
+      if (value.isNotEmpty) {
+        print('Received initial shared media: ${value.length} files');
+        _handleSharedMedia(value);
+      }
+    });
+  }
+
+  Future<void> _handleSharedText(String text) async {
+    if (!mounted) return;
+    final state = Provider.of<PortaThoughtyState>(context, listen: false);
+    await state.addTextNote(text);
+
+    // Navigate to Queue screen to show the new note
+    _onDestinationSelected(0);
+
+    // Show a snackbar confirmation
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Shared text added to your notes'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  Future<void> _handleSharedMedia(List<SharedMediaFile> media) async {
+    if (!mounted) return;
+    final state = Provider.of<PortaThoughtyState>(context, listen: false);
+
+    for (final file in media) {
+      if (file.path.isEmpty) continue;
+
+      // Only process images
+      final path = file.path;
+      final isImage = path.toLowerCase().endsWith('.jpg') ||
+          path.toLowerCase().endsWith('.jpeg') ||
+          path.toLowerCase().endsWith('.png') ||
+          path.toLowerCase().endsWith('.gif') ||
+          path.toLowerCase().endsWith('.webp');
+
+      if (isImage) {
+        try {
+          // Perform OCR on the shared image
+          final inputImage = InputImage.fromFilePath(path);
+          final textRecognizer = TextRecognizer();
+          final recognizedText = await textRecognizer.processImage(inputImage);
+          await textRecognizer.close();
+
+          // Create image note with OCR text
+          await state.addImageNote(
+            ocrText: recognizedText.text.isNotEmpty
+                ? recognizedText.text
+                : 'Image (no text detected)',
+            includeImage: true,
+            imagePath: path,
+          );
+
+          print('Added shared image note with OCR: ${recognizedText.text}');
+        } catch (e) {
+          print('Error processing shared image: $e');
+          // If OCR fails, still create a note with a placeholder
+          await state.addImageNote(
+            ocrText: 'Shared image',
+            includeImage: true,
+            imagePath: path,
+          );
+        }
+      }
+    }
+
+    // Navigate to Queue screen to show the new notes
+    _onDestinationSelected(0);
+
+    // Show a snackbar confirmation
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${media.length} shared ${media.length == 1 ? "image" : "images"} added to your notes'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
   @override
   void dispose() {
     _pageController.dispose();
+    _intentDataStreamSubscription?.cancel();
+    _intentMediaStreamSubscription?.cancel();
     super.dispose();
   }
 

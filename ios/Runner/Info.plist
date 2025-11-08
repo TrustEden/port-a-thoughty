@@ -49,5 +49,7 @@
 		<true/>
 		<key>UIViewControllerBasedStatusBarAppearance</key>
 		<false/>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>Port-A-Thoughty needs access to your photo library to save shared images as notes.</string>
 	</dict>
 </plist>

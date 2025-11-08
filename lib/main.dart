@@ -48,7 +48,6 @@ class _HomeShellState extends State<HomeShell> {
   int _index = 1;
   late PageController _pageController;
   static const platform = MethodChannel('com.example.porta_thoughty/widget'); // Define MethodChannel
-  StreamSubscription? _intentDataStreamSubscription;
   StreamSubscription? _intentMediaStreamSubscription;
 
   static final _destinations = [
@@ -115,43 +114,37 @@ class _HomeShellState extends State<HomeShell> {
   }
 
   void _initSharingListener() {
-    // Handle text shared from other apps while app is running
-    _intentDataStreamSubscription = ReceiveSharingIntent.instance.getTextStream().listen(
-      (String value) {
-        print('Received shared text: $value');
-        _handleSharedText(value);
-      },
-      onError: (err) {
-        print('Error receiving shared text: $err');
-      },
-    );
-
-    // Handle media (images) shared from other apps while app is running
+    // Handle media and text shared from other apps while app is running
+    // Note: In receive_sharing_intent 1.8.1+, text is included in the media stream
     _intentMediaStreamSubscription = ReceiveSharingIntent.instance.getMediaStream().listen(
       (List<SharedMediaFile> value) {
-        print('Received shared media: ${value.length} files');
-        _handleSharedMedia(value);
+        print('Received shared content: ${value.length} items');
+        _handleSharedContent(value);
       },
       onError: (err) {
-        print('Error receiving shared media: $err');
+        print('Error receiving shared content: $err');
       },
     );
 
-    // Handle text shared when app was closed/not running
-    ReceiveSharingIntent.instance.getInitialText().then((String? value) {
-      if (value != null) {
-        print('Received initial shared text: $value');
-        _handleSharedText(value);
-      }
-    });
-
-    // Handle media shared when app was closed/not running
+    // Handle media and text shared when app was closed/not running
     ReceiveSharingIntent.instance.getInitialMedia().then((List<SharedMediaFile> value) {
       if (value.isNotEmpty) {
-        print('Received initial shared media: ${value.length} files');
-        _handleSharedMedia(value);
+        print('Received initial shared content: ${value.length} items');
+        _handleSharedContent(value);
       }
     });
+  }
+
+  void _handleSharedContent(List<SharedMediaFile> sharedFiles) {
+    for (var file in sharedFiles) {
+      // Check if this is text content (type will be text or path contains text)
+      if (file.type == SharedMediaType.text || file.mimeType?.startsWith('text/') == true) {
+        _handleSharedText(file.path);
+      } else {
+        // Handle as media file
+        _handleSharedMedia([file]);
+      }
+    }
   }
 
   Future<void> _handleSharedText(String text) async {
@@ -235,7 +228,6 @@ class _HomeShellState extends State<HomeShell> {
   @override
   void dispose() {
     _pageController.dispose();
-    _intentDataStreamSubscription?.cancel();
     _intentMediaStreamSubscription?.cancel();
     super.dispose();
   }

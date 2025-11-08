@@ -10,8 +10,9 @@
         android:id="@+id/record_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:src="@drawable/ic_mic_black_24dp"
+        android:src="@drawable/capture"
         android:background="@android:color/transparent"
-        android:contentDescription="Record" />
+        android:contentDescription="Record"
+        android:scaleType="fitCenter" />
 
 </LinearLayout>

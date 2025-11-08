@@ -50,6 +50,7 @@ dependencies:
   google_mlkit_text_recognition: ^0.15.0
   image_picker: ^1.1.2
   file_picker: ^8.1.6
+  receive_sharing_intent: ^1.8.1
 
 dev_dependencies:
   flutter_test:

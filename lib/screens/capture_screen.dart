@@ -284,12 +284,19 @@ class _QuickActionsRow extends StatelessWidget {
       isScrollControlled: true,
       context: context,
       builder: (context) {
+        // Calculate safe top padding to keep sheet below header
+        // Header height (~80px) + header padding (24+18=42px) + safe margin (30px) = ~150px
+        final screenHeight = MediaQuery.of(context).size.height;
+        final safeTopPadding = MediaQuery.of(context).padding.top;
+        final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+        final minTopMargin = safeTopPadding + 150.0; // Keep below header
+
         return Padding(
           padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+            bottom: keyboardHeight + 20,
             left: 20,
             right: 20,
-            top: 24,
+            top: minTopMargin,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,

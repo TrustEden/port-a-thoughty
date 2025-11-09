@@ -685,7 +685,9 @@ class _EmptyQueuePlaceholder extends StatelessWidget {
       ),
       child: TweenAnimationBuilder<double>(
         tween: Tween(begin: 0.0, end: 1.0),
-        duration: const Duration(milliseconds: 600),
+        duration: MediaQuery.disableAnimationsOf(context)
+            ? Duration.zero
+            : const Duration(milliseconds: 600),
         curve: Curves.elasticOut,
         builder: (context, value, child) {
           return Transform.scale(

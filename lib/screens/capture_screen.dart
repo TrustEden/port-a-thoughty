@@ -11,6 +11,7 @@ import '../services/groq_file_processor.dart';
 import '../services/ocr_service.dart';
 import '../state/app_state.dart';
 import '../widgets/app_header.dart';
+import '../widgets/pressable_widget.dart';
 import '../widgets/project_selector.dart';
 import '../widgets/recent_note_list.dart';
 
@@ -159,6 +160,7 @@ class _RecordingButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final disableAnimations = MediaQuery.disableAnimationsOf(context);
     final ringColor = isRecording
         ? theme.colorScheme.error
         : theme.colorScheme.primary.withValues(alpha: 0.65);
@@ -172,7 +174,7 @@ class _RecordingButton extends StatelessWidget {
       child: GestureDetector(
         onTap: onPressed,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
+          duration: disableAnimations ? Duration.zero : const Duration(milliseconds: 250),
           curve: Curves.easeOutCubic,
           height: 140,
           width: 140,
@@ -195,12 +197,12 @@ class _RecordingButton extends StatelessWidget {
           ),
           child: Center(
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
+              duration: disableAnimations ? Duration.zero : const Duration(milliseconds: 200),
               curve: Curves.easeOutBack,
               height: isRecording ? 72 : 86,
               width: isRecording ? 72 : 86,
               child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 250),
+                duration: disableAnimations ? Duration.zero : const Duration(milliseconds: 250),
                 transitionBuilder: (child, animation) {
                   return ScaleTransition(
                     scale: animation,
@@ -649,9 +651,8 @@ class _QuickActionButton extends StatelessWidget {
       label: label,
       hint: 'Tap to $label',
       button: true,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(18),
-        onTap: onTap,
+      child: PressableWidget(
+        onPressed: onTap,
         child: Ink(
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
         decoration: BoxDecoration(

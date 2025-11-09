@@ -239,10 +239,13 @@ class _HomeShellState extends State<HomeShell> {
   }
 
   void _onDestinationSelected(int index) {
+    final disableAnimations = MediaQuery.disableAnimationsOf(context);
     _pageController.animateToPage(
       index,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
+      duration: disableAnimations
+          ? Duration.zero
+          : const Duration(milliseconds: 300),
+      curve: const Cubic(0.4, 0.0, 0.2, 1.0), // Material motion curve
     );
   }
 

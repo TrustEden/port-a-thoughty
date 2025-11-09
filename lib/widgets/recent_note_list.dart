@@ -219,6 +219,7 @@ class _NoteAvatar extends StatelessWidget {
           width: 34,
           height: 34,
           fit: BoxFit.contain,
+          gaplessPlayback: true,
         );
         break;
       case NoteType.image:
@@ -330,6 +331,7 @@ class _NoteOptionsMenu extends StatelessWidget {
                 'assets/trashicon.png',
                 width: 24,
                 height: 24,
+                gaplessPlayback: true,
               ),
               const SizedBox(width: 12),
               const Text('Delete'),
@@ -502,7 +504,7 @@ class _EmptyRecent extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Image.asset('assets/mascot.png', height: 80, fit: BoxFit.contain),
+          Image.asset('assets/mascot.png', height: 80, fit: BoxFit.contain, gaplessPlayback: true),
           const SizedBox(height: 12),
           Text(
             'Your inbox is empty, but your brain is full of ideas!',

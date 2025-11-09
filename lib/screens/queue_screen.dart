@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../models/note.dart';
@@ -18,50 +19,100 @@ class QueueScreen extends StatelessWidget {
 
     return Stack(
       children: [
-        ListView(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 160),
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Processing queue',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+        CustomScrollView(
+          slivers: [
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+              sliver: SliverToBoxAdapter(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Processing queue',
+                          style: Theme.of(
+                            context,
+                          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                        TextButton(
+                          onPressed: selectedCount > 0
+                              ? () => state.clearSelection()
+                              : null,
+                          child: const Text('Clear selection'),
+                        ),
+                      ],
+                    ),
+                    if (selectedCount > 0)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 12),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Chip(
+                            avatar: const Icon(Icons.check_circle_outline, size: 16),
+                            label: Text('$selectedCount selected'),
+                          ),
+                        ),
+                      ),
+                    const SizedBox(height: 16),
+                  ],
                 ),
-                TextButton(
-                  onPressed: selectedCount > 0
-                      ? () => state.clearSelection()
-                      : null,
-                  child: const Text('Clear selection'),
-                ),
-              ],
+              ),
             ),
-            if (selectedCount > 0)
-              Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Chip(
-                    avatar: const Icon(Icons.check_circle_outline, size: 16),
-                    label: Text('$selectedCount selected'),
+            if (notes.isEmpty)
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 160),
+                sliver: const SliverToBoxAdapter(
+                  child: _EmptyQueuePlaceholder(),
+                ),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 160),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final note = notes[index];
+                      return Dismissible(
+                        key: Key('note_${note.id}'),
+                        direction: DismissDirection.endToStart,
+                        confirmDismiss: (direction) async {
+                          HapticFeedback.mediumImpact();
+                          return true;
+                        },
+                        onDismissed: (direction) {
+                          _handleDelete(context, state, note);
+                        },
+                        background: Container(
+                          alignment: Alignment.centerRight,
+                          padding: const EdgeInsets.only(right: 20),
+                          margin: const EdgeInsets.symmetric(vertical: 10),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.error,
+                            borderRadius: BorderRadius.circular(26),
+                          ),
+                          child: const Icon(
+                            Icons.delete_outline,
+                            color: Colors.white,
+                            size: 32,
+                          ),
+                        ),
+                        child: _QueueNoteCard(
+                          note: note,
+                          selected: state.selectedNoteIds.contains(note.id),
+                          onToggle: () {
+                            HapticFeedback.lightImpact();
+                            state.toggleNoteSelection(note.id);
+                          },
+                          onDelete: () => _handleDelete(context, state, note),
+                        ),
+                      );
+                    },
+                    childCount: notes.length,
                   ),
                 ),
               ),
-            const SizedBox(height: 16),
-            if (notes.isEmpty)
-              const _EmptyQueuePlaceholder()
-            else
-              ...notes.map(
-                (note) => _QueueNoteCard(
-                  note: note,
-                  selected: state.selectedNoteIds.contains(note.id),
-                  onToggle: () => state.toggleNoteSelection(note.id),
-                  onDelete: () => _handleDelete(context, state, note),
-                ),
-              ),
-            const SizedBox(height: 120),
           ],
         ),
         Positioned.fill(
@@ -71,25 +122,35 @@ class QueueScreen extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
               child: SafeArea(
                 top: false,
-                child: FilledButton.icon(
-                  icon: const Icon(Icons.auto_mode),
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(58),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(22),
+                child: Semantics(
+                  label: selectedCount == 0
+                      ? 'Select notes to process'
+                      : 'Process $selectedCount note${selectedCount == 1 ? '' : 's'} into a document',
+                  hint: selectedCount == 0
+                      ? 'Select at least one note first'
+                      : 'Tap to compile selected notes into a markdown document',
+                  button: true,
+                  enabled: selectedCount > 0,
+                  child: FilledButton.icon(
+                    icon: const Icon(Icons.auto_mode),
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(58),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(22),
+                      ),
+                      textStyle: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                    textStyle: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
+                    onPressed: selectedCount == 0
+                        ? null
+                        : () => _beginProcessing(context),
+                    label: Text(
+                      selectedCount == 0
+                          ? 'Select notes to process'
+                          : 'Process ${selectedCount == 1 ? 'selected note' : '$selectedCount notes'}',
                     ),
-                  ),
-                  onPressed: selectedCount == 0
-                      ? null
-                      : () => _beginProcessing(context),
-                  label: Text(
-                    selectedCount == 0
-                        ? 'Select notes to process'
-                        : 'Process ${selectedCount == 1 ? 'selected note' : '$selectedCount notes'}',
                   ),
                 ),
               ),
@@ -105,6 +166,7 @@ class QueueScreen extends StatelessWidget {
     PortaThoughtyState state,
     Note note,
   ) async {
+    HapticFeedback.mediumImpact();
     final success = await state.deleteNote(note);
     if (!success) return;
     if (!context.mounted) return;
@@ -117,6 +179,7 @@ class QueueScreen extends StatelessWidget {
         action: SnackBarAction(
           label: 'Undo',
           onPressed: () {
+            HapticFeedback.lightImpact();
             state.undoNoteDeletion();
           },
         ),
@@ -125,6 +188,7 @@ class QueueScreen extends StatelessWidget {
   }
 
   Future<void> _beginProcessing(BuildContext context) async {
+    HapticFeedback.mediumImpact();
     final state = context.read<PortaThoughtyState>();
     final customTitle = await _showProcessSheet(context, state);
     if (customTitle == null) return;
@@ -137,20 +201,24 @@ class QueueScreen extends StatelessWidget {
     final messenger = ScaffoldMessenger.of(context);
     messenger.hideCurrentSnackBar();
     if (result.success) {
+      HapticFeedback.lightImpact();
       messenger.showSnackBar(
         SnackBar(
           content: const Text('Draft doc created. Undo available for 7 days.'),
           action: SnackBarAction(
             label: 'Undo',
             onPressed: () {
+              HapticFeedback.lightImpact();
               state.undoLastProcess();
             },
           ),
         ),
       );
     } else if (result.error != null && result.error!.isNotEmpty) {
+      HapticFeedback.mediumImpact();
       messenger.showSnackBar(SnackBar(content: Text(result.error!)));
     } else {
+      HapticFeedback.mediumImpact();
       messenger.showSnackBar(
         const SnackBar(
           content: Text('Processing failed. Try again in a moment.'),
@@ -463,6 +531,7 @@ class _QueueNoteCard extends StatelessWidget {
                       fit: BoxFit.contain,
                       color: theme.colorScheme.onSurfaceVariant,
                       colorBlendMode: BlendMode.srcIn,
+                      gaplessPlayback: true,
                     ),
                   ),
                 ],
@@ -610,7 +679,7 @@ class _EmptyQueuePlaceholder extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Image.asset('assets/bulb icon.png', height: 72, fit: BoxFit.contain),
+          Image.asset('assets/bulb icon.png', height: 72, fit: BoxFit.contain, gaplessPlayback: true),
           const SizedBox(height: 16),
           Text(
             'Queue is clear',

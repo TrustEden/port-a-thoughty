@@ -19,75 +19,98 @@ class DocsScreen extends StatelessWidget {
     final docs = state.docs;
     final lastDoc = state.lastProcessedDoc;
 
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 140),
-      children: [
-        if (lastDoc != null)
-          Container(
-            margin: const EdgeInsets.only(top: 20),
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primaryContainer,
-              borderRadius: BorderRadius.circular(22),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x18014F8E),
-                  blurRadius: 26,
-                  offset: Offset(0, 14),
-                ),
-              ],
-            ),
-            child: Row(
+    return CustomScrollView(
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+          sliver: SliverToBoxAdapter(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(
-                  Icons.history,
-                  color: Theme.of(context).colorScheme.onPrimaryContainer,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Processed "${lastDoc.title}" moments ago. Need to revert?',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onPrimaryContainer,
+                if (lastDoc != null)
+                  Container(
+                    margin: const EdgeInsets.only(top: 20),
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(22),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x18014F8E),
+                          blurRadius: 26,
+                          offset: Offset(0, 14),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.history,
+                          color: Theme.of(context).colorScheme.onPrimaryContainer,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Processed "${lastDoc.title}" moments ago. Need to revert?',
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Theme.of(context).colorScheme.onPrimaryContainer,
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () => state.undoLastProcess(),
+                          child: const Text('Undo'),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-                TextButton(
-                  onPressed: () => state.undoLastProcess(),
-                  child: const Text('Undo'),
+                Padding(
+                  padding: const EdgeInsets.only(top: 28, bottom: 14),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Docs & summaries',
+                        style: Theme.of(
+                          context,
+                        ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+                      ),
+                      TextButton.icon(
+                        onPressed: () => _showTokenEstimator(context),
+                        icon: const Icon(Icons.shield_outlined),
+                        label: const Text('Token safety'),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
-          ),
-        Padding(
-          padding: const EdgeInsets.only(top: 28, bottom: 14),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Docs & summaries',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
-              ),
-              TextButton.icon(
-                onPressed: () => _showTokenEstimator(context),
-                icon: const Icon(Icons.shield_outlined),
-                label: const Text('Token safety'),
-              ),
-            ],
           ),
         ),
         if (docs.isEmpty)
-          const _EmptyDocsPlaceholder()
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 140),
+            sliver: const SliverToBoxAdapter(
+              child: _EmptyDocsPlaceholder(),
+            ),
+          )
         else
-          ...docs.map(
-            (doc) => _DocCard(
-              doc: doc,
-              onPreview: () => _showDocPreview(context, doc),
-              onShare: () => _shareDoc(context, doc),
-              onDelete: () => _confirmDeleteDoc(context, doc),
-              canShare: (doc.markdownPath ?? '').isNotEmpty,
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 140),
+            sliver: SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  final doc = docs[index];
+                  return _DocCard(
+                    doc: doc,
+                    onPreview: () => _showDocPreview(context, doc),
+                    onShare: () => _shareDoc(context, doc),
+                    onDelete: () => _confirmDeleteDoc(context, doc),
+                    canShare: (doc.markdownPath ?? '').isNotEmpty,
+                  );
+                },
+                childCount: docs.length,
+              ),
             ),
           ),
       ],
@@ -514,6 +537,7 @@ class _DocCard extends StatelessWidget {
                     'assets/docs.png',
                     width: 60,
                     height: 60,
+                    gaplessPlayback: true,
                   ),
                   const SizedBox(width: 8),
                   Expanded(
@@ -594,6 +618,7 @@ class _DocCard extends StatelessWidget {
                       'assets/trashicon.png',
                       width: 24,
                       height: 24,
+                      gaplessPlayback: true,
                     ),
                   ),
                 ],
@@ -633,7 +658,7 @@ class _EmptyDocsPlaceholder extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Image.asset('assets/logo.png', height: 64, fit: BoxFit.contain),
+          Image.asset('assets/logo.png', height: 64, fit: BoxFit.contain, gaplessPlayback: true),
           const SizedBox(height: 16),
           Text(
             'No docs yet',

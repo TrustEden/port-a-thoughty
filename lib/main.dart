@@ -52,18 +52,18 @@ class _HomeShellState extends State<HomeShell> {
 
   static final _destinations = [
     NavigationDestination(
-      icon: Image.asset('assets/queue.png', width: 48, height: 48),
-      selectedIcon: Image.asset('assets/queue.png', width: 48, height: 48),
+      icon: Image.asset('assets/queue.png', width: 48, height: 48, gaplessPlayback: true),
+      selectedIcon: Image.asset('assets/queue.png', width: 48, height: 48, gaplessPlayback: true),
       label: 'Raw Notes',
     ),
     NavigationDestination(
-      icon: Image.asset('assets/capture.png', width: 48, height: 48),
-      selectedIcon: Image.asset('assets/capture.png', width: 48, height: 48),
+      icon: Image.asset('assets/capture.png', width: 48, height: 48, gaplessPlayback: true),
+      selectedIcon: Image.asset('assets/capture.png', width: 48, height: 48, gaplessPlayback: true),
       label: 'Capture',
     ),
     NavigationDestination(
-      icon: Image.asset('assets/docsnotes.png', width: 48, height: 48),
-      selectedIcon: Image.asset('assets/docsnotes.png', width: 48, height: 48),
+      icon: Image.asset('assets/docsnotes.png', width: 48, height: 48, gaplessPlayback: true),
+      selectedIcon: Image.asset('assets/docsnotes.png', width: 48, height: 48, gaplessPlayback: true),
       label: 'Docs',
     ),
   ];

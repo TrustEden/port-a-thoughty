@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+export 'app_constants.dart';
+
 class AppTheme {
   static const Color primaryBlue = Color(0xFF0D7BCE);
   static const Color accentLavender = Color(0xFF6A70F5);

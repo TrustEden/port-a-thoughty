@@ -88,11 +88,9 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
   Future<void> _handleLifecycleChange(AppLifecycleState state) async {
     if (!mounted) return;
 
-    final appState = Provider.of<PortaThoughtyState>(context, listen: false);
-
     if (state == AppLifecycleState.inactive || state == AppLifecycleState.paused) {
-      // App going to background - enter PiP if recording
-      if (appState.isRecording && !_isInPipMode) {
+      // App going to background - always enter PiP
+      if (!_isInPipMode) {
         final success = await PipService.enterPipMode();
         if (success) {
           setState(() {
@@ -364,26 +362,57 @@ class _FixedHeader extends StatelessWidget {
 }
 
 /// Minimal widget shown in Picture-in-Picture mode with just the recording button
-class _PipRecordingWidget extends StatelessWidget {
+class _PipRecordingWidget extends StatefulWidget {
   const _PipRecordingWidget({required this.state});
 
   final PortaThoughtyState state;
 
   @override
+  State<_PipRecordingWidget> createState() => _PipRecordingWidgetState();
+}
+
+class _PipRecordingWidgetState extends State<_PipRecordingWidget> {
+  final List<DateTime> _tapTimes = [];
+  static const _tripleTapWindow = Duration(milliseconds: 500);
+
+  void _handleTap() {
+    final now = DateTime.now();
+
+    // Add current tap
+    _tapTimes.add(now);
+
+    // Remove old taps outside the time window
+    _tapTimes.removeWhere(
+      (time) => now.difference(time) > _tripleTapWindow,
+    );
+
+    // Check for triple tap
+    if (_tapTimes.length >= 3) {
+      HapticFeedback.heavyImpact();
+      _tapTimes.clear();
+      // Exit PiP mode by finishing the activity
+      SystemNavigator.pop();
+    } else {
+      // Single tap - toggle recording
+      HapticFeedback.mediumImpact();
+      if (widget.state.isRecording) {
+        widget.state.stopRecording();
+      } else {
+        widget.state.startRecording();
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final isRecording = state.isRecording;
+    final isRecording = widget.state.isRecording;
     final disableAnimations = MediaQuery.disableAnimationsOf(context);
 
     return Scaffold(
       backgroundColor: Colors.white,
       body: Center(
         child: GestureDetector(
-          onTap: () {
-            HapticFeedback.mediumImpact();
-            if (isRecording) {
-              state.stopRecording();
-            }
-          },
+          onTap: _handleTap,
           child: AnimatedContainer(
             duration: disableAnimations
                 ? Duration.zero

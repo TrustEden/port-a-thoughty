@@ -113,7 +113,7 @@ class QueueScreen extends StatelessWidget {
                             state.toggleNoteSelection(note.id);
                           },
                           onDelete: () => _handleDelete(context, state, note),
-                          onImageNoteTap: () => _showImageNoteEditor(context, state, note),
+                          onNoteTap: () => _showNoteEditor(context, state, note),
                         ),
                       );
                     },
@@ -446,16 +446,37 @@ class QueueScreen extends StatelessWidget {
     return result;
   }
 
-  Future<void> _showImageNoteEditor(
+  Future<void> _showNoteEditor(
     BuildContext context,
     PortaThoughtyState state,
     Note note,
   ) async {
-    if (note.type != NoteType.image || note.imagePath == null) return;
-
     final theme = Theme.of(context);
     final textController = TextEditingController(text: note.text);
     bool includeImage = note.includeImage;
+
+    // Determine editor configuration based on note type
+    final String title;
+    final IconData icon;
+    final Color accentColor;
+
+    switch (note.type) {
+      case NoteType.voice:
+        title = 'Edit voice note';
+        icon = Icons.mic;
+        accentColor = theme.colorScheme.primary;
+        break;
+      case NoteType.text:
+        title = 'Edit text note';
+        icon = Icons.edit_note;
+        accentColor = const Color(0xFFFB8C00);
+        break;
+      case NoteType.image:
+        title = 'Edit image note';
+        icon = Icons.image_outlined;
+        accentColor = const Color(0xFF8E24AA);
+        break;
+    }
 
     final result = await showModalBottomSheet<bool>(
       context: context,
@@ -491,23 +512,24 @@ class QueueScreen extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Header
                         Row(
                           children: [
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: theme.colorScheme.primaryContainer,
+                                color: accentColor.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(18),
                               ),
                               child: Icon(
-                                Icons.image_outlined,
-                                color: theme.colorScheme.primary,
+                                icon,
+                                color: accentColor,
                               ),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Text(
-                                'Edit image note',
+                                title,
                                 style: theme.textTheme.titleLarge?.copyWith(
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -516,57 +538,98 @@ class QueueScreen extends StatelessWidget {
                           ],
                         ),
                         const SizedBox(height: 20),
-                        // Image preview
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(16),
-                          child: ConstrainedBox(
-                            constraints: BoxConstraints(
-                              maxHeight: MediaQuery.of(context).size.height * 0.3,
+
+                        // Low confidence warning for voice notes
+                        if (note.type == NoteType.voice && note.flaggedLowConfidence)
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 20),
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.errorContainer.withValues(alpha: 0.3),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: theme.colorScheme.error.withValues(alpha: 0.3),
+                              ),
                             ),
-                            child: Image.file(
-                              File(note.imagePath!),
-                              fit: BoxFit.contain,
-                              width: double.infinity,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        // Include image checkbox
-                        InkWell(
-                          borderRadius: BorderRadius.circular(12),
-                          onTap: () {
-                            HapticFeedback.lightImpact();
-                            setModalState(() {
-                              includeImage = !includeImage;
-                            });
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
                             child: Row(
                               children: [
-                                Checkbox(
-                                  value: includeImage,
-                                  onChanged: (value) {
-                                    HapticFeedback.lightImpact();
-                                    setModalState(() {
-                                      includeImage = value ?? true;
-                                    });
-                                  },
+                                Icon(
+                                  Icons.warning_amber_rounded,
+                                  color: theme.colorScheme.error,
+                                  size: 20,
                                 ),
+                                const SizedBox(width: 12),
                                 Expanded(
                                   child: Text(
-                                    'Include image in processed document',
-                                    style: theme.textTheme.bodyLarge,
+                                    'Low confidence transcription - please review carefully',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: theme.colorScheme.error,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 20),
-                        // Editable OCR text
+
+                        // Image preview for image notes
+                        if (note.type == NoteType.image && note.imagePath != null) ...[
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                maxHeight: MediaQuery.of(context).size.height * 0.3,
+                              ),
+                              child: Image.file(
+                                File(note.imagePath!),
+                                fit: BoxFit.contain,
+                                width: double.infinity,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          // Include image checkbox
+                          InkWell(
+                            borderRadius: BorderRadius.circular(12),
+                            onTap: () {
+                              HapticFeedback.lightImpact();
+                              setModalState(() {
+                                includeImage = !includeImage;
+                              });
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              child: Row(
+                                children: [
+                                  Checkbox(
+                                    value: includeImage,
+                                    onChanged: (value) {
+                                      HapticFeedback.lightImpact();
+                                      setModalState(() {
+                                        includeImage = value ?? true;
+                                      });
+                                    },
+                                  ),
+                                  Expanded(
+                                    child: Text(
+                                      'Include image in processed document',
+                                      style: theme.textTheme.bodyLarge,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                        ],
+
+                        // Editable text
                         Text(
-                          'OCR Text',
+                          note.type == NoteType.image
+                              ? 'OCR Text'
+                              : note.type == NoteType.voice
+                                  ? 'Transcription'
+                                  : 'Note Text',
                           style: theme.textTheme.labelLarge?.copyWith(
                             fontWeight: FontWeight.w700,
                           ),
@@ -574,9 +637,14 @@ class QueueScreen extends StatelessWidget {
                         const SizedBox(height: 12),
                         TextField(
                           controller: textController,
-                          maxLines: 8,
+                          maxLines: note.type == NoteType.image ? 8 : 12,
+                          autofocus: note.type == NoteType.text,
                           decoration: InputDecoration(
-                            hintText: 'Edit the extracted text...',
+                            hintText: note.type == NoteType.image
+                                ? 'Edit the extracted text...'
+                                : note.type == NoteType.voice
+                                    ? 'Edit the transcription...'
+                                    : 'Edit your note...',
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(16),
                             ),
@@ -587,6 +655,7 @@ class QueueScreen extends StatelessWidget {
                           style: theme.textTheme.bodyMedium,
                         ),
                         const SizedBox(height: 24),
+
                         // Buttons
                         Row(
                           children: [
@@ -654,12 +723,14 @@ class QueueScreen extends StatelessWidget {
     if (result == true && context.mounted) {
       final updatedNote = note.copyWith(
         text: textController.text,
-        includeImage: includeImage,
+        includeImage: note.type == NoteType.image ? includeImage : note.includeImage,
       );
       await state.updateNote(updatedNote);
 
-      // Show feedback about image inclusion change
-      if (note.includeImage != includeImage && context.mounted) {
+      // Show feedback about image inclusion change (for image notes only)
+      if (note.type == NoteType.image &&
+          note.includeImage != includeImage &&
+          context.mounted) {
         final messenger = ScaffoldMessenger.of(context);
         messenger.hideCurrentSnackBar();
         if (!includeImage) {
@@ -683,6 +754,14 @@ class QueueScreen extends StatelessWidget {
             ),
           );
         }
+      } else if (context.mounted) {
+        // Show generic save confirmation for text/voice notes
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Note updated'),
+            duration: Duration(seconds: 2),
+          ),
+        );
       }
     }
 
@@ -714,14 +793,14 @@ class _QueueNoteCard extends StatelessWidget {
     required this.selected,
     required this.onToggle,
     this.onDelete,
-    this.onImageNoteTap,
+    this.onNoteTap,
   });
 
   final Note note;
   final bool selected;
   final VoidCallback onToggle;
   final Future<void> Function()? onDelete;
-  final VoidCallback? onImageNoteTap;
+  final VoidCallback? onNoteTap;
 
   @override
   Widget build(BuildContext context) {
@@ -749,11 +828,11 @@ class _QueueNoteCard extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(26),
         onTap: () {
-          // If it's an image note and we have a handler, show the editor
+          // If we have a note tap handler, show the editor
           // Otherwise toggle selection
-          if (note.type == NoteType.image && onImageNoteTap != null) {
+          if (onNoteTap != null) {
             HapticFeedback.mediumImpact();
-            onImageNoteTap!();
+            onNoteTap!();
           } else {
             onToggle();
           }

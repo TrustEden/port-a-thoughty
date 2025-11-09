@@ -88,9 +88,11 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
   Future<void> _handleLifecycleChange(AppLifecycleState state) async {
     if (!mounted) return;
 
+    final appState = Provider.of<PortaThoughtyState>(context, listen: false);
+
     if (state == AppLifecycleState.inactive || state == AppLifecycleState.paused) {
-      // App going to background - always enter PiP
-      if (!_isInPipMode) {
+      // App going to background - enter PiP if enabled in settings
+      if (!_isInPipMode && appState.settings.pipEnabled) {
         final success = await PipService.enterPipMode();
         if (success) {
           setState(() {

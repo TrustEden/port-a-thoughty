@@ -649,6 +649,14 @@ User notes:''';
     notifyListeners();
   }
 
+  Future<void> updatePipEnabled(bool enabled) async {
+    await _ensureInitialized();
+    if (_settings.pipEnabled == enabled) return;
+    _settings = _settings.copyWith(pipEnabled: enabled);
+    await _database.saveSettings(_settings);
+    notifyListeners();
+  }
+
   /// Refreshes the queue by reloading notes from database
   Future<void> refreshQueue() async {
     await _ensureInitialized();

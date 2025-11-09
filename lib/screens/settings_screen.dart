@@ -68,6 +68,41 @@ class SettingsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 28),
             _SectionTitle(
+              title: 'App Behavior',
+              subtitle: 'Customize how the app works',
+            ),
+            const SizedBox(height: 16),
+            _SettingsCard(
+              child: Consumer<PortaThoughtyState>(
+                builder: (context, state, _) {
+                  final pipEnabled = state.settings.pipEnabled;
+                  return Column(
+                    children: [
+                      _SettingsTile(
+                        icon: Icons.picture_in_picture_outlined,
+                        title: 'Picture-in-Picture',
+                        subtitle: pipEnabled
+                            ? 'Enabled - App appears as floating button when minimized'
+                            : 'Disabled - Normal minimize behavior',
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          state.updatePipEnabled(!pipEnabled);
+                        },
+                        trailing: Switch(
+                          value: pipEnabled,
+                          onChanged: (value) {
+                            HapticFeedback.lightImpact();
+                            state.updatePipEnabled(value);
+                          },
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 28),
+            _SectionTitle(
               title: 'About',
               subtitle: 'App information',
             ),

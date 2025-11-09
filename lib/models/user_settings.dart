@@ -2,6 +2,7 @@ class UserSettings {
   const UserSettings({
     this.silenceTimeout = const Duration(seconds: 8),
     this.maxRecordingDuration = const Duration(minutes: 2),
+    this.pipEnabled = true,
     this.openaiApiKey,
     this.geminiApiKey,
     this.anthropicApiKey,
@@ -10,6 +11,7 @@ class UserSettings {
 
   final Duration silenceTimeout;
   final Duration maxRecordingDuration;
+  final bool pipEnabled;
   final String? openaiApiKey;
   final String? geminiApiKey;
   final String? anthropicApiKey;
@@ -17,6 +19,7 @@ class UserSettings {
 
   static const String _silenceTimeoutKey = 'silence_timeout_ms';
   static const String _maxRecordingKey = 'max_recording_duration_ms';
+  static const String _pipEnabledKey = 'pip_enabled';
   static const String _openaiApiKeyKey = 'openai_api_key';
   static const String _geminiApiKeyKey = 'gemini_api_key';
   static const String _anthropicApiKeyKey = 'anthropic_api_key';
@@ -25,6 +28,7 @@ class UserSettings {
   UserSettings copyWith({
     Duration? silenceTimeout,
     Duration? maxRecordingDuration,
+    bool? pipEnabled,
     String? openaiApiKey,
     String? geminiApiKey,
     String? anthropicApiKey,
@@ -33,6 +37,7 @@ class UserSettings {
     return UserSettings(
       silenceTimeout: silenceTimeout ?? this.silenceTimeout,
       maxRecordingDuration: maxRecordingDuration ?? this.maxRecordingDuration,
+      pipEnabled: pipEnabled ?? this.pipEnabled,
       openaiApiKey: openaiApiKey ?? this.openaiApiKey,
       geminiApiKey: geminiApiKey ?? this.geminiApiKey,
       anthropicApiKey: anthropicApiKey ?? this.anthropicApiKey,
@@ -44,6 +49,7 @@ class UserSettings {
     final map = {
       _silenceTimeoutKey: silenceTimeout.inMilliseconds.toString(),
       _maxRecordingKey: maxRecordingDuration.inMilliseconds.toString(),
+      _pipEnabledKey: pipEnabled ? '1' : '0',
     };
 
     if (openaiApiKey != null && openaiApiKey!.isNotEmpty) {
@@ -80,6 +86,7 @@ class UserSettings {
         storage[_maxRecordingKey],
         const Duration(minutes: 2),
       ),
+      pipEnabled: storage[_pipEnabledKey] == '1',
       openaiApiKey: storage[_openaiApiKeyKey],
       geminiApiKey: storage[_geminiApiKeyKey],
       anthropicApiKey: storage[_anthropicApiKeyKey],

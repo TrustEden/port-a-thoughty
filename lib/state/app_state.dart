@@ -631,4 +631,21 @@ User notes:''';
     await _database.saveSettings(_settings);
     notifyListeners();
   }
+
+  Future<void> updateApiKeys({
+    String? openai,
+    String? gemini,
+    String? anthropic,
+    String? groq,
+  }) async {
+    await _ensureInitialized();
+    _settings = _settings.copyWith(
+      openaiApiKey: openai,
+      geminiApiKey: gemini,
+      anthropicApiKey: anthropic,
+      groqApiKey: groq,
+    );
+    await _database.saveSettings(_settings);
+    notifyListeners();
+  }
 }

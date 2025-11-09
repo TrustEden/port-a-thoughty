@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -19,8 +20,13 @@ class DocsScreen extends StatelessWidget {
     final docs = state.docs;
     final lastDoc = state.lastProcessedDoc;
 
-    return CustomScrollView(
-      slivers: [
+    return RefreshIndicator(
+      onRefresh: () async {
+        HapticFeedback.lightImpact();
+        await state.refreshDocs();
+      },
+      child: CustomScrollView(
+        slivers: [
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
           sliver: SliverToBoxAdapter(
@@ -114,6 +120,7 @@ class DocsScreen extends StatelessWidget {
             ),
           ),
       ],
+      ),
     );
   }
 
@@ -656,25 +663,39 @@ class _EmptyDocsPlaceholder extends StatelessWidget {
           color: theme.colorScheme.primary.withValues(alpha: 0.1),
         ),
       ),
-      child: Column(
-        children: [
-          Image.asset('assets/logo.png', height: 64, fit: BoxFit.contain, gaplessPlayback: true),
-          const SizedBox(height: 16),
-          Text(
-            'No docs yet',
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w700,
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0.0, end: 1.0),
+        duration: const Duration(milliseconds: 600),
+        curve: Curves.elasticOut,
+        builder: (context, value, child) {
+          return Transform.scale(
+            scale: value,
+            child: Opacity(
+              opacity: value,
+              child: child,
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Process a few notes from the queue to generate your first Markdown summary.',
-            textAlign: TextAlign.center,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+          );
+        },
+        child: Column(
+          children: [
+            Image.asset('assets/logo.png', height: 64, fit: BoxFit.contain, gaplessPlayback: true),
+            const SizedBox(height: 16),
+            Text(
+              'No docs yet',
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 8),
+            Text(
+              'Process a few notes from the queue to generate your first Markdown summary.',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

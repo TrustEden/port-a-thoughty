@@ -19,8 +19,13 @@ class QueueScreen extends StatelessWidget {
 
     return Stack(
       children: [
-        CustomScrollView(
-          slivers: [
+        RefreshIndicator(
+          onRefresh: () async {
+            HapticFeedback.lightImpact();
+            await state.refreshQueue();
+          },
+          child: CustomScrollView(
+            slivers: [
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
               sliver: SliverToBoxAdapter(
@@ -114,6 +119,7 @@ class QueueScreen extends StatelessWidget {
                 ),
               ),
           ],
+          ),
         ),
         Positioned.fill(
           child: Align(
@@ -677,25 +683,39 @@ class _EmptyQueuePlaceholder extends StatelessWidget {
           color: theme.colorScheme.primary.withValues(alpha: 0.1),
         ),
       ),
-      child: Column(
-        children: [
-          Image.asset('assets/bulb icon.png', height: 72, fit: BoxFit.contain, gaplessPlayback: true),
-          const SizedBox(height: 16),
-          Text(
-            'Queue is clear',
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0.0, end: 1.0),
+        duration: const Duration(milliseconds: 600),
+        curve: Curves.elasticOut,
+        builder: (context, value, child) {
+          return Transform.scale(
+            scale: value,
+            child: Opacity(
+              opacity: value,
+              child: child,
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Capture new thoughts from the mic tab and they will queue up here ready for AI cleanup.',
-            textAlign: TextAlign.center,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+          );
+        },
+        child: Column(
+          children: [
+            Image.asset('assets/bulb icon.png', height: 72, fit: BoxFit.contain, gaplessPlayback: true),
+            const SizedBox(height: 16),
+            Text(
+              'Queue is clear',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 8),
+            Text(
+              'Capture new thoughts from the mic tab and they will queue up here ready for AI cleanup.',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

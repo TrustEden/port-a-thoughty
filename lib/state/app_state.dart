@@ -648,4 +648,18 @@ User notes:''';
     await _database.saveSettings(_settings);
     notifyListeners();
   }
+
+  /// Refreshes the queue by reloading notes from database
+  Future<void> refreshQueue() async {
+    await _ensureInitialized();
+    _notes = await _database.fetchActiveNotes(_activeProjectId);
+    notifyListeners();
+  }
+
+  /// Refreshes the docs list by reloading from database
+  Future<void> refreshDocs() async {
+    await _ensureInitialized();
+    _docs = await _database.fetchDocs(_activeProjectId);
+    notifyListeners();
+  }
 }

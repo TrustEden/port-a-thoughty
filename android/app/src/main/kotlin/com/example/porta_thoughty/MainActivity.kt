@@ -7,24 +7,50 @@ import android.content.Context
 import android.appwidget.AppWidgetManager
 import android.content.Intent
 import android.content.ComponentName
-import android.os.Bundle // Import Bundle
+import android.os.Bundle
+import android.os.Build
+import android.app.PictureInPictureParams
+import android.util.Rational
 import com.example.porta_thoughty.widget.RecordWidgetProvider
 
 class MainActivity : FlutterActivity() {
     private val CHANNEL = "com.example.porta_thoughty/widget"
-    private lateinit var methodChannel: MethodChannel // Declare methodChannel
+    private val PIP_CHANNEL = "com.porta_thoughty/pip"
+    private lateinit var methodChannel: MethodChannel
+    private lateinit var pipChannel: MethodChannel
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
-        methodChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL) // Initialize methodChannel
-        methodChannel.setMethodCallHandler {
-            call, result ->
+
+        // Widget channel
+        methodChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
+        methodChannel.setMethodCallHandler { call, result ->
             if (call.method == "updateWidget") {
                 val isRecording = call.argument<Boolean>("isRecording") ?: false
                 updateRecordWidget(this, isRecording)
                 result.success(null)
             } else {
                 result.notImplemented()
+            }
+        }
+
+        // PiP channel
+        pipChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, PIP_CHANNEL)
+        pipChannel.setMethodCallHandler { call, result ->
+            when (call.method) {
+                "isPipSupported" -> {
+                    result.success(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                }
+                "enterPipMode" -> {
+                    val success = enterPipMode()
+                    result.success(success)
+                }
+                "isInPipMode" -> {
+                    result.success(isInPictureInPictureMode)
+                }
+                else -> {
+                    result.notImplemented()
+                }
             }
         }
 
@@ -54,5 +80,21 @@ class MainActivity : FlutterActivity() {
         // Send broadcast to update all instances of the widget
         updateIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, appWidgetIds)
         context.sendBroadcast(updateIntent)
+    }
+
+    private fun enterPipMode(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            try {
+                val params = PictureInPictureParams.Builder()
+                    .setAspectRatio(Rational(1, 1)) // Square aspect ratio
+                    .build()
+                enterPictureInPictureMode(params)
+                true
+            } catch (e: Exception) {
+                false
+            }
+        } else {
+            false
+        }
     }
 }

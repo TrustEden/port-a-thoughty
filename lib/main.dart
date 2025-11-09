@@ -10,6 +10,7 @@ import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart
 import 'screens/capture_screen.dart';
 import 'screens/docs_screen.dart';
 import 'screens/queue_screen.dart';
+import 'services/pip_service.dart';
 import 'state/app_state.dart';
 import 'theme/app_theme.dart';
 import 'widgets/app_header.dart';
@@ -44,11 +45,12 @@ class HomeShell extends StatefulWidget {
   State<HomeShell> createState() => _HomeShellState();
 }
 
-class _HomeShellState extends State<HomeShell> {
+class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
   int _index = 1;
   late PageController _pageController;
   static const platform = MethodChannel('com.example.porta_thoughty/widget'); // Define MethodChannel
   StreamSubscription? _intentMediaStreamSubscription;
+  bool _isInPipMode = false;
 
   static final _destinations = [
     NavigationDestination(
@@ -74,6 +76,38 @@ class _HomeShellState extends State<HomeShell> {
     _pageController = PageController(initialPage: _index);
     _setupMethodChannel(); // Setup MethodChannel listener
     _initSharingListener(); // Setup share intent listeners
+    WidgetsBinding.instance.addObserver(this); // Add lifecycle observer
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    _handleLifecycleChange(state);
+  }
+
+  Future<void> _handleLifecycleChange(AppLifecycleState state) async {
+    if (!mounted) return;
+
+    final appState = Provider.of<PortaThoughtyState>(context, listen: false);
+
+    if (state == AppLifecycleState.inactive || state == AppLifecycleState.paused) {
+      // App going to background - enter PiP if recording
+      if (appState.isRecording && !_isInPipMode) {
+        final success = await PipService.enterPipMode();
+        if (success) {
+          setState(() {
+            _isInPipMode = true;
+          });
+        }
+      }
+    } else if (state == AppLifecycleState.resumed) {
+      // App came back to foreground
+      if (_isInPipMode) {
+        setState(() {
+          _isInPipMode = false;
+        });
+      }
+    }
   }
 
   void _setupMethodChannel() {
@@ -229,6 +263,7 @@ class _HomeShellState extends State<HomeShell> {
   void dispose() {
     _pageController.dispose();
     _intentMediaStreamSubscription?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
@@ -251,6 +286,14 @@ class _HomeShellState extends State<HomeShell> {
 
   @override
   Widget build(BuildContext context) {
+    final appState = context.watch<PortaThoughtyState>();
+
+    // Show minimal PiP UI when in PiP mode
+    if (_isInPipMode) {
+      return _PipRecordingWidget(state: appState);
+    }
+
+    // Normal full UI
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -315,6 +358,61 @@ class _FixedHeader extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 18),
         child: AppHeader(subtitle: subtitles[currentIndex]),
+      ),
+    );
+  }
+}
+
+/// Minimal widget shown in Picture-in-Picture mode with just the recording button
+class _PipRecordingWidget extends StatelessWidget {
+  const _PipRecordingWidget({required this.state});
+
+  final PortaThoughtyState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final isRecording = state.isRecording;
+    final disableAnimations = MediaQuery.disableAnimationsOf(context);
+
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Center(
+        child: GestureDetector(
+          onTap: () {
+            HapticFeedback.mediumImpact();
+            if (isRecording) {
+              state.stopRecording();
+            }
+          },
+          child: AnimatedContainer(
+            duration: disableAnimations
+                ? Duration.zero
+                : const Duration(milliseconds: 250),
+            curve: Curves.easeOutCubic,
+            child: AnimatedSwitcher(
+              duration: disableAnimations
+                  ? Duration.zero
+                  : const Duration(milliseconds: 250),
+              transitionBuilder: (child, animation) {
+                return ScaleTransition(
+                  scale: animation,
+                  child: FadeTransition(
+                    opacity: animation,
+                    child: child,
+                  ),
+                );
+              },
+              child: Image.asset(
+                key: ValueKey(isRecording ? 'stop' : 'mic'),
+                isRecording ? 'assets/stoprecording.png' : 'assets/mic.png',
+                width: 120,
+                height: 120,
+                fit: BoxFit.contain,
+                gaplessPlayback: true,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 
 /// Representation of a user project/collection that groups captured notes.
 class Project {
-  // Map of commonly used Material icon code points to const IconData instances
-  // This helps with tree-shaking by using const instances instead of dynamic creation
+  // Map of Material icon code points to const IconData instances
+  // IMPORTANT: Only const IconData instances are used to support tree-shaking
+  // Any icons not in this map will fall back to Icons.folder
   static final Map<int, IconData> _materialIconsCache = {
+    // Common project icons
     0xe88a: Icons.inbox,
     0xe3c9: Icons.folder,
     0xe86c: Icons.work,
@@ -25,23 +27,59 @@ class Project {
     0xe0bf: Icons.business,
     0xe87c: Icons.category,
     0xe2c7: Icons.label,
+    // Additional common icons
+    0xe3a3: Icons.event,
+    0xe3c7: Icons.schedule,
+    0xe3ab: Icons.description,
+    0xe3af: Icons.note,
+    0xe3c6: Icons.assignment,
+    0xe3d0: Icons.create,
+    0xe3d3: Icons.edit,
+    0xe3d4: Icons.save,
+    0xe3b8: Icons.cloud,
+    0xe3a2: Icons.cloud_upload,
+    0xe3a4: Icons.cloud_download,
+    0xe3e4: Icons.attach_file,
+    0xe3e5: Icons.attachment,
+    0xe3e8: Icons.insert_drive_file,
+    0xe3e9: Icons.folder_open,
+    0xe3eb: Icons.image,
+    0xe3ee: Icons.photo,
+    0xe3f0: Icons.camera,
+    0xe3f1: Icons.camera_alt,
+    0xe3f4: Icons.video_camera_back,
+    0xe3f5: Icons.videocam,
+    0xe402: Icons.music_note,
+    0xe40e: Icons.mic,
+    0xe412: Icons.volume_up,
+    0xe8b8: Icons.notifications,
+    0xe7f5: Icons.alarm,
+    0xe855: Icons.today,
+    0xe8df: Icons.calendar_today,
+    0xe916: Icons.add,
+    0xe15b: Icons.remove,
+    0xe14c: Icons.close,
+    0xe5cd: Icons.check,
+    0xe5c5: Icons.done,
+    0xe5ca: Icons.check_circle,
+    0xe000: Icons.error,
+    0xe001: Icons.warning,
+    0xe88e: Icons.info,
   };
 
-  // Helper to create IconData in a way that's compatible with tree-shaking
+  // Helper to get IconData in a way that's compatible with tree-shaking
+  // Only returns const IconData instances from the cache or a default
   static IconData? _createIconData(int? codePoint, String? fontFamily) {
     if (codePoint == null) return null;
 
-    // If using MaterialIcons font family (or null/default), try to use cached const instances
+    // Only support MaterialIcons font family for tree-shaking compatibility
     if (fontFamily == null || fontFamily == 'MaterialIcons') {
-      // Check if we have a const instance for this code point
-      if (_materialIconsCache.containsKey(codePoint)) {
-        return _materialIconsCache[codePoint]!;
-      }
+      // Return cached const instance or default to folder icon
+      return _materialIconsCache[codePoint] ?? Icons.folder;
     }
 
-    // Fallback: create IconData with explicit fontFamily
-    // This is still dynamic but better than implicit null fontFamily
-    return IconData(codePoint, fontFamily: fontFamily ?? 'MaterialIcons');
+    // For non-MaterialIcons fonts, return null (unsupported for tree-shaking)
+    return null;
   }
   const Project({
     required this.id,

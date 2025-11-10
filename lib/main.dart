@@ -430,36 +430,41 @@ class _PipRecordingWidgetState extends State<_PipRecordingWidget> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Center(
-        child: GestureDetector(
-          onTap: _handleTap,
-          child: AnimatedContainer(
-            duration: disableAnimations
-                ? Duration.zero
-                : const Duration(milliseconds: 250),
-            curve: Curves.easeOutCubic,
-            child: AnimatedSwitcher(
-              duration: disableAnimations
-                  ? Duration.zero
-                  : const Duration(milliseconds: 250),
-              transitionBuilder: (child, animation) {
-                return ScaleTransition(
-                  scale: animation,
-                  child: FadeTransition(
-                    opacity: animation,
-                    child: child,
+      body: GestureDetector(
+        onTap: _handleTap,
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          color: Colors.white,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              // Use 60% of the smaller dimension for the icon
+              final iconSize = (constraints.maxHeight * 0.6).clamp(60.0, 100.0);
+
+              return Center(
+                child: AnimatedSwitcher(
+                  duration: disableAnimations
+                      ? Duration.zero
+                      : const Duration(milliseconds: 250),
+                  transitionBuilder: (child, animation) {
+                    return ScaleTransition(
+                      scale: animation,
+                      child: FadeTransition(
+                        opacity: animation,
+                        child: child,
+                      ),
+                    );
+                  },
+                  child: Image.asset(
+                    key: ValueKey(isRecording ? 'stop' : 'mic'),
+                    isRecording ? 'assets/stoprecording.png' : 'assets/mic.png',
+                    width: iconSize,
+                    height: iconSize,
+                    fit: BoxFit.contain,
+                    gaplessPlayback: true,
                   ),
-                );
-              },
-              child: Image.asset(
-                key: ValueKey(isRecording ? 'stop' : 'mic'),
-                isRecording ? 'assets/stoprecording.png' : 'assets/mic.png',
-                width: 120,
-                height: 120,
-                fit: BoxFit.contain,
-                gaplessPlayback: true,
-              ),
-            ),
+                ),
+              );
+            },
           ),
         ),
       ),

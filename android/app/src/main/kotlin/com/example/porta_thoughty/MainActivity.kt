@@ -86,10 +86,9 @@ class MainActivity : FlutterActivity() {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             try {
                 val params = PictureInPictureParams.Builder()
-                    .setAspectRatio(Rational(1, 1)) // Square aspect ratio
+                    .setAspectRatio(Rational(3, 4)) // Portrait-ish ratio for button
                     .build()
                 enterPictureInPictureMode(params)
-                true
             } catch (e: Exception) {
                 false
             }

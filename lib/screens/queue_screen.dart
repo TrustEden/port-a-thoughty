@@ -37,31 +37,41 @@ class QueueScreen extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          'Processing queue',
-                          style: Theme.of(
-                            context,
-                          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+                        Flexible(
+                          child: Text(
+                            'Processing queue',
+                            style: Theme.of(
+                              context,
+                            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+                          ),
                         ),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            TextButton(
-                              onPressed: notes.isNotEmpty && selectedCount < notes.length
-                                  ? () {
-                                      HapticFeedback.lightImpact();
-                                      state.selectAllNotes();
-                                    }
-                                  : null,
-                              child: const Text('Select all'),
-                            ),
-                            TextButton(
-                              onPressed: selectedCount > 0
-                                  ? () => state.clearSelection()
-                                  : null,
-                              child: const Text('Clear selection'),
-                            ),
-                          ],
+                        Flexible(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              TextButton(
+                                onPressed: notes.isNotEmpty && selectedCount < notes.length
+                                    ? () {
+                                        HapticFeedback.lightImpact();
+                                        state.selectAllNotes();
+                                      }
+                                    : null,
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                                ),
+                                child: const Text('Select all'),
+                              ),
+                              TextButton(
+                                onPressed: selectedCount > 0
+                                    ? () => state.clearSelection()
+                                    : null,
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                                ),
+                                child: const Text('Clear selection'),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),

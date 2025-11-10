@@ -86,7 +86,7 @@ class UserSettings {
         storage[_maxRecordingKey],
         const Duration(minutes: 2),
       ),
-      pipEnabled: storage[_pipEnabledKey] == '1',
+      pipEnabled: storage[_pipEnabledKey] != '0',  // Default true unless explicitly disabled
       openaiApiKey: storage[_openaiApiKeyKey],
       geminiApiKey: storage[_geminiApiKeyKey],
       anthropicApiKey: storage[_anthropicApiKeyKey],

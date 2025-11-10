@@ -610,8 +610,105 @@ class _QuickActionsRow extends StatelessWidget {
       return;
     }
 
-    // Show loading indicator
+    final state = context.read<PortaThoughtyState>();
+
+    // Check if file is an image
+    final isImage = _isImageFile(filePath);
+
+    if (isImage) {
+      // Handle image upload with local OCR
+      await _handleImageUpload(context, state, filePath, file.name);
+    } else {
+      // Handle non-image files with Groq
+      await _handleNonImageUpload(context, state, filePath, file.name);
+    }
+  }
+
+  bool _isImageFile(String filePath) {
+    final extension = filePath.toLowerCase().split('.').last;
+    return ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'heic'].contains(extension);
+  }
+
+  Future<void> _handleImageUpload(
+    BuildContext context,
+    PortaThoughtyState state,
+    String filePath,
+    String fileName,
+  ) async {
+    // Show image preview sheet to ask if user wants to include image
+    final includeImage = await _showImagePreviewSheet(context, filePath);
+
+    if (includeImage == null) {
+      // User cancelled
+      return;
+    }
+
     if (!context.mounted) return;
+
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: Card(
+          child: Padding(
+            padding: EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text('Extracting text from image...'),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    // Process OCR locally with Google ML Kit
+    final ocrService = OcrService();
+    String ocrText = '';
+
+    try {
+      final ocrResult = await ocrService.extractTextWithConfidence(filePath);
+      ocrText = ocrResult.text;
+    } catch (e) {
+      print('OCR failed: $e');
+    } finally {
+      ocrService.dispose();
+    }
+
+    if (!context.mounted) return;
+    Navigator.of(context).pop(); // Close loading dialog
+
+    // Add image note to queue
+    await state.addImageNote(
+      ocrText: ocrText.isEmpty ? '' : ocrText,
+      includeImage: includeImage,
+      imagePath: filePath,
+      label: fileName,
+    );
+
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          includeImage
+              ? 'Image + OCR note added to queue.'
+              : 'OCR text added to queue (image not included).',
+        ),
+      ),
+    );
+  }
+
+  Future<void> _handleNonImageUpload(
+    BuildContext context,
+    PortaThoughtyState state,
+    String filePath,
+    String fileName,
+  ) async {
+    // Show loading indicator
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -651,7 +748,7 @@ class _QuickActionsRow extends StatelessWidget {
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('File "${file.name}" processed and added to queue.'),
+        content: Text('File "$fileName" processed and added to queue.'),
       ),
     );
   }

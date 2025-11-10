@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:speech_to_text/speech_to_text.dart';
 
 import '../models/note.dart';
 import '../models/processed_doc.dart';
@@ -282,7 +283,23 @@ User notes:''';
     try {
       final hasPermission = await _speechService.initialize();
       if (hasPermission) {
-        _speechService.startListening();
+        // For press-and-hold mode, use extended timeouts optimized for continuous speech
+        // Note: Android may override pauseFor with its own system timeout
+        // For tap mode, use the configured settings
+        final listenFor = _settings.pressAndHoldToRecord
+            ? const Duration(minutes: 10) // Extended but platform-acceptable duration
+            : _settings.maxRecordingDuration;
+        final pauseFor = _settings.pressAndHoldToRecord
+            ? const Duration(seconds: 60) // Longer pauses OK in press-hold mode
+            : _settings.silenceTimeout;
+
+        _speechService.startListening(
+          listenFor: listenFor,
+          pauseFor: pauseFor,
+          listenMode: _settings.pressAndHoldToRecord
+              ? ListenMode.dictation // Better for continuous long-form speech
+              : ListenMode.confirmation, // Better for quick notes
+        );
       } else {
         _lastRecordingError = 'Speech recognition permission not granted.';
         notifyListeners();

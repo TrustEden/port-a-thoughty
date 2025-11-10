@@ -267,6 +267,14 @@ User notes:''';
     notifyListeners();
   }
 
+  void selectAllNotes() {
+    final allNoteIds = _notes.map((note) => note.id).toSet();
+    if (allNoteIds.isEmpty) return;
+    _selectedNoteIds.clear();
+    _selectedNoteIds.addAll(allNoteIds);
+    notifyListeners();
+  }
+
   Future<void> startRecording() async {
     await _ensureInitialized();
     if (_isRecording) return;

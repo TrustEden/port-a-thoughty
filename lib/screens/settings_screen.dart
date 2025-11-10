@@ -68,6 +68,41 @@ class SettingsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 28),
             _SectionTitle(
+              title: 'Recording',
+              subtitle: 'Configure recording behavior',
+            ),
+            const SizedBox(height: 16),
+            _SettingsCard(
+              child: Consumer<PortaThoughtyState>(
+                builder: (context, state, _) {
+                  final enabled = state.settings.pressAndHoldToRecord;
+                  return Column(
+                    children: [
+                      _SettingsTile(
+                        icon: Icons.touch_app,
+                        title: 'Press and Hold to Record',
+                        subtitle: enabled
+                            ? 'Hold the button to record, release to stop'
+                            : 'Tap once to start, tap again to stop',
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          state.updatePressAndHoldToRecord(!enabled);
+                        },
+                        trailing: Switch(
+                          value: enabled,
+                          onChanged: (value) {
+                            HapticFeedback.lightImpact();
+                            state.updatePressAndHoldToRecord(value);
+                          },
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 28),
+            _SectionTitle(
               title: 'About',
               subtitle: 'App information',
             ),

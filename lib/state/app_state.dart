@@ -649,6 +649,14 @@ User notes:''';
     notifyListeners();
   }
 
+  Future<void> updatePressAndHoldToRecord(bool enabled) async {
+    await _ensureInitialized();
+    if (_settings.pressAndHoldToRecord == enabled) return;
+    _settings = _settings.copyWith(pressAndHoldToRecord: enabled);
+    await _database.saveSettings(_settings);
+    notifyListeners();
+  }
+
   /// Refreshes the queue by reloading notes from database
   Future<void> refreshQueue() async {
     await _ensureInitialized();

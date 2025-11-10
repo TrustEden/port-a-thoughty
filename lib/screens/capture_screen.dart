@@ -119,9 +119,13 @@ class _SpeechCaptureCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            isRecording
-                ? 'Listening... tap the button to stop.'
-                : 'Let me write that down! Tap to record.',
+            state.settings.pressAndHoldToRecord
+                ? (isRecording
+                    ? 'Listening... release to stop.'
+                    : 'Let me write that down! Hold to record.')
+                : (isRecording
+                    ? 'Listening... tap the button to stop.'
+                    : 'Let me write that down! Tap to record.'),
             style: GoogleFonts.comicNeue(
               textStyle: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
@@ -130,19 +134,34 @@ class _SpeechCaptureCard extends StatelessWidget {
           ),
           const SizedBox(height: 28),
           Center(
-            child: _RecordingButton(
-              isRecording: isRecording,
-              onPressed: () async {
-                if (isRecording) {
-                  HapticFeedback.mediumImpact();
-                  await state.stopRecording();
-                }
-                else {
-                  HapticFeedback.heavyImpact();
-                  await state.startRecording();
-                }
-              },
-            ),
+            child: state.settings.pressAndHoldToRecord
+                ? _RecordingButton(
+                    isRecording: isRecording,
+                    onLongPressStart: (_) async {
+                      if (!isRecording) {
+                        HapticFeedback.heavyImpact();
+                        await state.startRecording();
+                      }
+                    },
+                    onLongPressEnd: (_) async {
+                      if (isRecording) {
+                        HapticFeedback.mediumImpact();
+                        await state.stopRecording();
+                      }
+                    },
+                  )
+                : _RecordingButton(
+                    isRecording: isRecording,
+                    onPressed: () async {
+                      if (isRecording) {
+                        HapticFeedback.mediumImpact();
+                        await state.stopRecording();
+                      } else {
+                        HapticFeedback.heavyImpact();
+                        await state.startRecording();
+                      }
+                    },
+                  ),
           ),
           const SizedBox(height: 20),
         ],
@@ -152,10 +171,17 @@ class _SpeechCaptureCard extends StatelessWidget {
 }
 
 class _RecordingButton extends StatelessWidget {
-  const _RecordingButton({required this.isRecording, required this.onPressed});
+  const _RecordingButton({
+    required this.isRecording,
+    this.onPressed,
+    this.onLongPressStart,
+    this.onLongPressEnd,
+  });
 
   final bool isRecording;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
+  final Function(LongPressStartDetails)? onLongPressStart;
+  final Function(LongPressEndDetails)? onLongPressEnd;
 
   @override
   Widget build(BuildContext context) {
@@ -173,6 +199,8 @@ class _RecordingButton extends StatelessWidget {
       button: true,
       child: GestureDetector(
         onTap: onPressed,
+        onLongPressStart: onLongPressStart,
+        onLongPressEnd: onLongPressEnd,
         child: AnimatedContainer(
           duration: disableAnimations ? Duration.zero : const Duration(milliseconds: 250),
           curve: Curves.easeOutCubic,

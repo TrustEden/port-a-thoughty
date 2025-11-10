@@ -77,7 +77,21 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
     _setupMethodChannel(); // Setup MethodChannel listener
     _initSharingListener(); // Setup share intent listeners
     WidgetsBinding.instance.addObserver(this); // Add lifecycle observer
+    _setupPipHandler(); // Setup PiP action handler
     debugPrint('PiP Debug: Lifecycle observer registered in initState');
+  }
+
+  void _setupPipHandler() {
+    PipService.setupMethodCallHandler(() {
+      if (!mounted) return;
+      final state = Provider.of<PortaThoughtyState>(context, listen: false);
+      debugPrint('PiP: Toggle recording called from PiP button. Currently recording: ${state.isRecording}');
+      if (state.isRecording) {
+        state.stopRecording();
+      } else {
+        state.startRecording();
+      }
+    });
   }
 
   @override

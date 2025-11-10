@@ -5,6 +5,18 @@ import 'package:flutter/services.dart';
 /// Service to handle Picture-in-Picture mode on Android
 class PipService {
   static const _channel = MethodChannel('com.porta_thoughty/pip');
+  static Function()? _onToggleRecording;
+
+  /// Set up method call handler for PiP actions from native side
+  static void setupMethodCallHandler(Function() onToggleRecording) {
+    _onToggleRecording = onToggleRecording;
+    _channel.setMethodCallHandler((call) async {
+      if (call.method == 'toggleRecording') {
+        debugPrint('PiP Service: Received toggleRecording from native');
+        _onToggleRecording?.call();
+      }
+    });
+  }
 
   /// Check if PiP is supported on this device
   static Future<bool> isPipSupported() async {

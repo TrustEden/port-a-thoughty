@@ -10,6 +10,11 @@ import android.content.ComponentName
 import android.os.Bundle
 import android.os.Build
 import android.app.PictureInPictureParams
+import android.app.RemoteAction
+import android.app.PendingIntent
+import android.content.BroadcastReceiver
+import android.content.IntentFilter
+import android.graphics.drawable.Icon
 import android.util.Rational
 import com.example.porta_thoughty.widget.RecordWidgetProvider
 
@@ -18,6 +23,49 @@ class MainActivity : FlutterActivity() {
     private val PIP_CHANNEL = "com.porta_thoughty/pip"
     private lateinit var methodChannel: MethodChannel
     private lateinit var pipChannel: MethodChannel
+
+    // PiP action constants
+    private val PIP_ACTION_TOGGLE_RECORDING = "com.example.porta_thoughty.PIP_TOGGLE_RECORDING"
+    private val PIP_ACTION_CLOSE = "com.example.porta_thoughty.PIP_CLOSE"
+
+    private val pipReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            when (intent?.action) {
+                PIP_ACTION_TOGGLE_RECORDING -> {
+                    // Notify Flutter to toggle recording
+                    pipChannel.invokeMethod("toggleRecording", null)
+                }
+                PIP_ACTION_CLOSE -> {
+                    // Close the PiP window
+                    finish()
+                }
+            }
+        }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        // Register PiP broadcast receiver
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val filter = IntentFilter().apply {
+                addAction(PIP_ACTION_TOGGLE_RECORDING)
+                addAction(PIP_ACTION_CLOSE)
+            }
+            registerReceiver(pipReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        // Unregister receiver
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            try {
+                unregisterReceiver(pipReceiver)
+            } catch (e: Exception) {
+                // Receiver might not be registered
+            }
+        }
+    }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -85,8 +133,44 @@ class MainActivity : FlutterActivity() {
     private fun enterPipMode(): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             try {
+                // Create RemoteActions for PiP controls
+                val actions = ArrayList<RemoteAction>()
+
+                // Toggle recording button
+                val toggleIntent = PendingIntent.getBroadcast(
+                    this,
+                    0,
+                    Intent(PIP_ACTION_TOGGLE_RECORDING),
+                    PendingIntent.FLAG_IMMUTABLE
+                )
+                val toggleIcon = Icon.createWithResource(this, android.R.drawable.ic_btn_speak_now)
+                val toggleAction = RemoteAction(
+                    toggleIcon,
+                    "Record",
+                    "Toggle recording",
+                    toggleIntent
+                )
+                actions.add(toggleAction)
+
+                // Close button
+                val closeIntent = PendingIntent.getBroadcast(
+                    this,
+                    1,
+                    Intent(PIP_ACTION_CLOSE),
+                    PendingIntent.FLAG_IMMUTABLE
+                )
+                val closeIcon = Icon.createWithResource(this, android.R.drawable.ic_menu_close_clear_cancel)
+                val closeAction = RemoteAction(
+                    closeIcon,
+                    "Close",
+                    "Close PiP",
+                    closeIntent
+                )
+                actions.add(closeAction)
+
                 val params = PictureInPictureParams.Builder()
                     .setAspectRatio(Rational(3, 4)) // Portrait-ish ratio for button
+                    .setActions(actions)
                     .build()
                 enterPictureInPictureMode(params)
             } catch (e: Exception) {

@@ -2,6 +2,47 @@ import 'package:flutter/material.dart';
 
 /// Representation of a user project/collection that groups captured notes.
 class Project {
+  // Map of commonly used Material icon code points to const IconData instances
+  // This helps with tree-shaking by using const instances instead of dynamic creation
+  static final Map<int, IconData> _materialIconsCache = {
+    0xe88a: Icons.inbox,
+    0xe3c9: Icons.folder,
+    0xe86c: Icons.work,
+    0xe7f4: Icons.home,
+    0xe8d2: Icons.star,
+    0xe7fe: Icons.favorite,
+    0xe0b7: Icons.book,
+    0xe8f4: Icons.school,
+    0xe8f9: Icons.settings,
+    0xe7ee: Icons.help,
+    0xe3a8: Icons.lightbulb,
+    0xe8e8: Icons.code,
+    0xe3a7: Icons.build,
+    0xe3a9: Icons.shopping_cart,
+    0xe558: Icons.attach_money,
+    0xe7fd: Icons.person,
+    0xe7ef: Icons.group,
+    0xe0bf: Icons.business,
+    0xe87c: Icons.category,
+    0xe2c7: Icons.label,
+  };
+
+  // Helper to create IconData in a way that's compatible with tree-shaking
+  static IconData? _createIconData(int? codePoint, String? fontFamily) {
+    if (codePoint == null) return null;
+
+    // If using MaterialIcons font family (or null/default), try to use cached const instances
+    if (fontFamily == null || fontFamily == 'MaterialIcons') {
+      // Check if we have a const instance for this code point
+      if (_materialIconsCache.containsKey(codePoint)) {
+        return _materialIconsCache[codePoint]!;
+      }
+    }
+
+    // Fallback: create IconData with explicit fontFamily
+    // This is still dynamic but better than implicit null fontFamily
+    return IconData(codePoint, fontFamily: fontFamily ?? 'MaterialIcons');
+  }
   const Project({
     required this.id,
     required this.name,
@@ -48,9 +89,7 @@ class Project {
       id: map['id'] as String,
       name: map['name'] as String,
       color: Color(colorValue),
-      icon: iconCodePoint != null
-          ? IconData(iconCodePoint, fontFamily: iconFontFamily)
-          : null,
+      icon: _createIconData(iconCodePoint, iconFontFamily),
       prompt: map['prompt'] as String?,
       createdAt: _dateFromMillis(map['created_at'] as int?),
       updatedAt: _dateFromMillis(map['updated_at'] as int?),

@@ -70,11 +70,18 @@ class _IntroScreenState extends State<IntroScreen> {
                   alignment: Alignment.topRight,
                   child: TextButton(
                     onPressed: _onSkip,
-                    child: const Text(
+                    child: Text(
                       'Skip',
                       style: TextStyle(
                         fontSize: 16,
-                        color: Colors.white70,
+                        color: Colors.white,
+                        shadows: [
+                          Shadow(
+                            offset: const Offset(0, 1),
+                            blurRadius: 4,
+                            color: Colors.black.withValues(alpha: 0.3),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -157,13 +164,13 @@ class _WelcomePage extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
-            Icons.lightbulb_outline,
-            size: 120,
-            color: Colors.white,
+          Image.asset(
+            'assets/logo.png',
+            width: 180,
+            height: 180,
           ),
           const SizedBox(height: 32),
-          const Text(
+          Text(
             'Welcome to\nPorta-Thoughty',
             textAlign: TextAlign.center,
             style: TextStyle(
@@ -171,6 +178,13 @@ class _WelcomePage extends StatelessWidget {
               fontWeight: FontWeight.bold,
               color: Colors.white,
               height: 1.2,
+              shadows: [
+                Shadow(
+                  offset: const Offset(0, 2),
+                  blurRadius: 8,
+                  color: Colors.black.withValues(alpha: 0.5),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 24),
@@ -179,8 +193,15 @@ class _WelcomePage extends StatelessWidget {
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 20,
-              color: Colors.white.withValues(alpha: 0.9),
+              color: Colors.white,
               height: 1.4,
+              shadows: [
+                Shadow(
+                  offset: const Offset(0, 1),
+                  blurRadius: 6,
+                  color: Colors.black.withValues(alpha: 0.4),
+                ),
+              ],
             ),
           ),
         ],
@@ -199,30 +220,37 @@ class _CaptureMethodsPage extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text(
+          Text(
             'Three Ways to Capture',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 32,
               fontWeight: FontWeight.bold,
               color: Colors.white,
+              shadows: [
+                Shadow(
+                  offset: const Offset(0, 2),
+                  blurRadius: 8,
+                  color: Colors.black.withValues(alpha: 0.5),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 48),
           _CaptureMethodItem(
-            icon: Icons.mic,
+            imagePath: 'assets/mic.png',
             title: 'Voice',
             description: 'Speak your thoughts naturally',
           ),
           const SizedBox(height: 32),
           _CaptureMethodItem(
-            icon: Icons.text_fields,
+            imagePath: 'assets/written.png',
             title: 'Text',
             description: 'Type quick notes',
           ),
           const SizedBox(height: 32),
           _CaptureMethodItem(
-            icon: Icons.camera_alt,
+            imagePath: 'assets/camera.png',
             title: 'Image',
             description: 'Snap photos with text',
           ),
@@ -232,8 +260,15 @@ class _CaptureMethodsPage extends StatelessWidget {
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 16,
-              color: Colors.white.withValues(alpha: 0.8),
+              color: Colors.white,
               fontStyle: FontStyle.italic,
+              shadows: [
+                Shadow(
+                  offset: const Offset(0, 1),
+                  blurRadius: 6,
+                  color: Colors.black.withValues(alpha: 0.4),
+                ),
+              ],
             ),
           ),
         ],
@@ -244,12 +279,12 @@ class _CaptureMethodsPage extends StatelessWidget {
 
 class _CaptureMethodItem extends StatelessWidget {
   const _CaptureMethodItem({
-    required this.icon,
+    required this.imagePath,
     required this.title,
     required this.description,
   });
 
-  final IconData icon;
+  final String imagePath;
   final String title;
   final String description;
 
@@ -258,15 +293,15 @@ class _CaptureMethodItem extends StatelessWidget {
     return Row(
       children: [
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.2),
+            color: Colors.white.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(16),
           ),
-          child: Icon(
-            icon,
-            size: 48,
-            color: Colors.white,
+          child: Image.asset(
+            imagePath,
+            width: 56,
+            height: 56,
           ),
         ),
         const SizedBox(width: 24),
@@ -276,10 +311,17 @@ class _CaptureMethodItem extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
+                  shadows: [
+                    Shadow(
+                      offset: const Offset(0, 1),
+                      blurRadius: 6,
+                      color: Colors.black.withValues(alpha: 0.4),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 4),
@@ -287,7 +329,14 @@ class _CaptureMethodItem extends StatelessWidget {
                 description,
                 style: TextStyle(
                   fontSize: 16,
-                  color: Colors.white.withValues(alpha: 0.8),
+                  color: Colors.white,
+                  shadows: [
+                    Shadow(
+                      offset: const Offset(0, 1),
+                      blurRadius: 4,
+                      color: Colors.black.withValues(alpha: 0.3),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -308,19 +357,26 @@ class _QueuePage extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
-            Icons.inbox,
-            size: 100,
-            color: Colors.white,
+          Image.asset(
+            'assets/queue.png',
+            width: 140,
+            height: 140,
           ),
           const SizedBox(height: 32),
-          const Text(
+          Text(
             'Your Raw Notes Queue',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 32,
               fontWeight: FontWeight.bold,
               color: Colors.white,
+              shadows: [
+                Shadow(
+                  offset: const Offset(0, 2),
+                  blurRadius: 8,
+                  color: Colors.black.withValues(alpha: 0.5),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 24),
@@ -329,8 +385,15 @@ class _QueuePage extends StatelessWidget {
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 18,
-              color: Colors.white.withValues(alpha: 0.9),
+              color: Colors.white,
               height: 1.5,
+              shadows: [
+                Shadow(
+                  offset: const Offset(0, 1),
+                  blurRadius: 6,
+                  color: Colors.black.withValues(alpha: 0.4),
+                ),
+              ],
             ),
           ),
         ],
@@ -352,66 +415,52 @@ class _ProcessingPage extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.notes,
-                  size: 40,
-                  color: Colors.white,
-                ),
+              Image.asset(
+                'assets/queue.png',
+                width: 50,
+                height: 50,
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 12),
               const Icon(
                 Icons.arrow_forward,
-                size: 32,
+                size: 28,
                 color: Colors.white,
               ),
-              const SizedBox(width: 16),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.auto_awesome,
-                  size: 40,
-                  color: Colors.white,
-                ),
+              const SizedBox(width: 12),
+              Image.asset(
+                'assets/bulb icon.png',
+                width: 50,
+                height: 50,
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 12),
               const Icon(
                 Icons.arrow_forward,
-                size: 32,
+                size: 28,
                 color: Colors.white,
               ),
-              const SizedBox(width: 16),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.description,
-                  size: 40,
-                  color: Colors.white,
-                ),
+              const SizedBox(width: 12),
+              Image.asset(
+                'assets/docsnotes.png',
+                width: 50,
+                height: 50,
               ),
             ],
           ),
           const SizedBox(height: 48),
-          const Text(
+          Text(
             'Processing Magic',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 32,
               fontWeight: FontWeight.bold,
               color: Colors.white,
+              shadows: [
+                Shadow(
+                  offset: const Offset(0, 2),
+                  blurRadius: 8,
+                  color: Colors.black.withValues(alpha: 0.5),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 24),
@@ -420,8 +469,15 @@ class _ProcessingPage extends StatelessWidget {
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 18,
-              color: Colors.white.withValues(alpha: 0.9),
+              color: Colors.white,
               height: 1.5,
+              shadows: [
+                Shadow(
+                  offset: const Offset(0, 1),
+                  blurRadius: 6,
+                  color: Colors.black.withValues(alpha: 0.4),
+                ),
+              ],
             ),
           ),
         ],
@@ -440,19 +496,26 @@ class _ReadyPage extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
-            Icons.check_circle_outline,
-            size: 120,
-            color: Colors.white,
+          Image.asset(
+            'assets/capture.png',
+            width: 160,
+            height: 160,
           ),
           const SizedBox(height: 32),
-          const Text(
+          Text(
             'You\'re All Set!',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 36,
               fontWeight: FontWeight.bold,
               color: Colors.white,
+              shadows: [
+                Shadow(
+                  offset: const Offset(0, 2),
+                  blurRadius: 8,
+                  color: Colors.black.withValues(alpha: 0.5),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 24),
@@ -461,8 +524,15 @@ class _ReadyPage extends StatelessWidget {
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 20,
-              color: Colors.white.withValues(alpha: 0.9),
+              color: Colors.white,
               height: 1.5,
+              shadows: [
+                Shadow(
+                  offset: const Offset(0, 1),
+                  blurRadius: 6,
+                  color: Colors.black.withValues(alpha: 0.4),
+                ),
+              ],
             ),
           ),
         ],

@@ -3,6 +3,7 @@ class UserSettings {
     this.silenceTimeout = const Duration(seconds: 8),
     this.maxRecordingDuration = const Duration(minutes: 2),
     this.pressAndHoldToRecord = false,
+    this.hasSeenIntro = false,
     this.openaiApiKey,
     this.geminiApiKey,
     this.anthropicApiKey,
@@ -12,6 +13,7 @@ class UserSettings {
   final Duration silenceTimeout;
   final Duration maxRecordingDuration;
   final bool pressAndHoldToRecord;
+  final bool hasSeenIntro;
   final String? openaiApiKey;
   final String? geminiApiKey;
   final String? anthropicApiKey;
@@ -20,6 +22,7 @@ class UserSettings {
   static const String _silenceTimeoutKey = 'silence_timeout_ms';
   static const String _maxRecordingKey = 'max_recording_duration_ms';
   static const String _pressAndHoldKey = 'press_and_hold_to_record';
+  static const String _hasSeenIntroKey = 'has_seen_intro';
   static const String _openaiApiKeyKey = 'openai_api_key';
   static const String _geminiApiKeyKey = 'gemini_api_key';
   static const String _anthropicApiKeyKey = 'anthropic_api_key';
@@ -29,6 +32,7 @@ class UserSettings {
     Duration? silenceTimeout,
     Duration? maxRecordingDuration,
     bool? pressAndHoldToRecord,
+    bool? hasSeenIntro,
     String? openaiApiKey,
     String? geminiApiKey,
     String? anthropicApiKey,
@@ -38,6 +42,7 @@ class UserSettings {
       silenceTimeout: silenceTimeout ?? this.silenceTimeout,
       maxRecordingDuration: maxRecordingDuration ?? this.maxRecordingDuration,
       pressAndHoldToRecord: pressAndHoldToRecord ?? this.pressAndHoldToRecord,
+      hasSeenIntro: hasSeenIntro ?? this.hasSeenIntro,
       openaiApiKey: openaiApiKey ?? this.openaiApiKey,
       geminiApiKey: geminiApiKey ?? this.geminiApiKey,
       anthropicApiKey: anthropicApiKey ?? this.anthropicApiKey,
@@ -50,6 +55,7 @@ class UserSettings {
       _silenceTimeoutKey: silenceTimeout.inMilliseconds.toString(),
       _maxRecordingKey: maxRecordingDuration.inMilliseconds.toString(),
       _pressAndHoldKey: pressAndHoldToRecord ? '1' : '0',
+      _hasSeenIntroKey: hasSeenIntro ? '1' : '0',
     };
 
     if (openaiApiKey != null && openaiApiKey!.isNotEmpty) {
@@ -87,6 +93,7 @@ class UserSettings {
         const Duration(minutes: 2),
       ),
       pressAndHoldToRecord: storage[_pressAndHoldKey] == '1',
+      hasSeenIntro: storage[_hasSeenIntroKey] == '1',
       openaiApiKey: storage[_openaiApiKeyKey],
       geminiApiKey: storage[_geminiApiKeyKey],
       anthropicApiKey: storage[_anthropicApiKeyKey],

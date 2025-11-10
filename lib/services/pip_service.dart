@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 /// Service to handle Picture-in-Picture mode on Android
@@ -20,19 +21,19 @@ class PipService {
   /// Enter Picture-in-Picture mode
   /// Returns true if successfully entered PiP mode
   static Future<bool> enterPipMode() async {
-    print('PiP Service: enterPipMode called');
+    debugPrint('PiP Service: enterPipMode called');
     if (!Platform.isAndroid) {
-      print('PiP Service: Not Android, returning false');
+      debugPrint('PiP Service: Not Android, returning false');
       return false;
     }
 
     try {
-      print('PiP Service: Invoking enterPipMode method channel...');
+      debugPrint('PiP Service: Invoking enterPipMode method channel...');
       final bool? result = await _channel.invokeMethod('enterPipMode');
-      print('PiP Service: Method channel returned: $result');
+      debugPrint('PiP Service: Method channel returned: $result');
       return result ?? false;
     } catch (e) {
-      print('PiP Service: Error calling enterPipMode: $e');
+      debugPrint('PiP Service: Error calling enterPipMode: $e');
       return false;
     }
   }

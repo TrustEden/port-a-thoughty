@@ -77,6 +77,7 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
     _setupMethodChannel(); // Setup MethodChannel listener
     _initSharingListener(); // Setup share intent listeners
     WidgetsBinding.instance.addObserver(this); // Add lifecycle observer
+    debugPrint('PiP Debug: Lifecycle observer registered in initState');
   }
 
   @override
@@ -86,43 +87,43 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
   }
 
   Future<void> _handleLifecycleChange(AppLifecycleState state) async {
-    print('PiP Debug: Lifecycle state changed to: $state');
+    debugPrint('PiP Debug: Lifecycle state changed to: $state');
     if (!mounted) {
-      print('PiP Debug: Widget not mounted, returning');
+      debugPrint('PiP Debug: Widget not mounted, returning');
       return;
     }
 
     final appState = Provider.of<PortaThoughtyState>(context, listen: false);
 
     if (state == AppLifecycleState.inactive || state == AppLifecycleState.paused) {
-      print('PiP Debug: App going to background');
-      print('PiP Debug: _isInPipMode = $_isInPipMode');
-      print('PiP Debug: pipEnabled = ${appState.settings.pipEnabled}');
+      debugPrint('PiP Debug: App going to background');
+      debugPrint('PiP Debug: _isInPipMode = $_isInPipMode');
+      debugPrint('PiP Debug: pipEnabled = ${appState.settings.pipEnabled}');
 
       // App going to background - enter PiP if enabled in settings
       if (!_isInPipMode && appState.settings.pipEnabled) {
-        print('PiP Debug: Attempting to enter PiP mode...');
+        debugPrint('PiP Debug: Attempting to enter PiP mode...');
         final success = await PipService.enterPipMode();
-        print('PiP Debug: Enter PiP result: $success');
+        debugPrint('PiP Debug: Enter PiP result: $success');
         if (success) {
           setState(() {
             _isInPipMode = true;
           });
-          print('PiP Debug: Successfully entered PiP mode');
+          debugPrint('PiP Debug: Successfully entered PiP mode');
         } else {
-          print('PiP Debug: Failed to enter PiP mode');
+          debugPrint('PiP Debug: Failed to enter PiP mode');
         }
       } else {
-        print('PiP Debug: Skipping PiP - already in PiP or disabled');
+        debugPrint('PiP Debug: Skipping PiP - already in PiP or disabled');
       }
     } else if (state == AppLifecycleState.resumed) {
-      print('PiP Debug: App resumed');
+      debugPrint('PiP Debug: App resumed');
       // App came back to foreground
       if (_isInPipMode) {
         setState(() {
           _isInPipMode = false;
         });
-        print('PiP Debug: Exited PiP mode');
+        debugPrint('PiP Debug: Exited PiP mode');
       }
     }
   }

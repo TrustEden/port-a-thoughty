@@ -500,18 +500,17 @@ class QueueScreen extends StatelessWidget {
               ),
               child: SafeArea(
                 top: false,
-                child: Padding(
+                child: SingleChildScrollView(
                   padding: EdgeInsets.only(
                     left: 24,
                     right: 24,
                     top: 32,
                     bottom: MediaQuery.of(context).viewInsets.bottom + 24,
                   ),
-                  child: SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                         // Header
                         Row(
                           children: [
@@ -712,8 +711,7 @@ class QueueScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-              ),
-            );
+              );
           },
         );
       },

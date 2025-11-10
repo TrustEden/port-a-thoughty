@@ -461,7 +461,11 @@ class QueueScreen extends StatelessWidget {
       },
     );
 
-    controller.dispose();
+    // Delay disposal to ensure the bottom sheet animation is fully complete
+    // Bottom sheet animations typically take 200-300ms, so we wait longer to be safe
+    Future.delayed(const Duration(milliseconds: 500), () {
+      controller.dispose();
+    });
     return result;
   }
 

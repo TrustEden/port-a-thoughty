@@ -9,6 +9,7 @@ import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart
 
 import 'screens/capture_screen.dart';
 import 'screens/docs_screen.dart';
+import 'screens/intro_screen.dart';
 import 'screens/queue_screen.dart';
 import 'state/app_state.dart';
 import 'theme/app_theme.dart';
@@ -49,6 +50,7 @@ class _HomeShellState extends State<HomeShell> {
   late PageController _pageController;
   static const platform = MethodChannel('com.example.porta_thoughty/widget'); // Define MethodChannel
   StreamSubscription? _intentMediaStreamSubscription;
+  bool _hasCheckedIntro = false;
 
   static final _destinations = [
     NavigationDestination(
@@ -74,6 +76,24 @@ class _HomeShellState extends State<HomeShell> {
     _pageController = PageController(initialPage: _index);
     _setupMethodChannel(); // Setup MethodChannel listener
     _initSharingListener(); // Setup share intent listeners
+    _checkAndShowIntro(); // Check if we need to show intro
+  }
+
+  void _checkAndShowIntro() {
+    // Wait for next frame to ensure context is available
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _hasCheckedIntro) return;
+      final state = Provider.of<PortaThoughtyState>(context, listen: false);
+      if (state.isReady && !state.settings.hasSeenIntro) {
+        _hasCheckedIntro = true;
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => const IntroScreen(),
+            fullscreenDialog: true,
+          ),
+        );
+      }
+    });
   }
 
   void _setupMethodChannel() {
@@ -252,6 +272,21 @@ class _HomeShellState extends State<HomeShell> {
   @override
   Widget build(BuildContext context) {
     final appState = context.watch<PortaThoughtyState>();
+
+    // Check for intro when state becomes ready
+    if (!_hasCheckedIntro && appState.isReady && !appState.settings.hasSeenIntro) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && !_hasCheckedIntro) {
+          _hasCheckedIntro = true;
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const IntroScreen(),
+              fullscreenDialog: true,
+            ),
+          );
+        }
+      });
+    }
 
     // Normal full UI
     return Container(

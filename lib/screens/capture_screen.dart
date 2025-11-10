@@ -244,15 +244,15 @@ class _RecordingButton extends StatelessWidget {
                     ? Image.asset(
                         key: const ValueKey('stop'),
                         'assets/stoprecording.png',
-                        width: 34,
-                        height: 34,
+                        width: 136,
+                        height: 136,
                         gaplessPlayback: true,
                       )
                     : Image.asset(
                         key: const ValueKey('mic'),
                         'assets/mic.png',
-                        width: 34,
-                        height: 34,
+                        width: 136,
+                        height: 136,
                         gaplessPlayback: true,
                       ),
               ),

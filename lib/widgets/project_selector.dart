@@ -208,39 +208,42 @@ class ProjectSelector extends StatelessWidget {
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: DropdownButtonFormField<String>(
-                      key: ValueKey(activeId),
-                      initialValue: activeId,
-                      decoration: InputDecoration(
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 14,
-                        ),
-                        filled: true,
-                        fillColor: theme.colorScheme.surface,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(18),
-                          borderSide: BorderSide(
-                            color: theme.colorScheme.primary.withValues(
-                              alpha: 0.12,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(18),
+                      child: DropdownButtonFormField<String>(
+                        key: ValueKey(activeId),
+                        initialValue: activeId,
+                        decoration: InputDecoration(
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
+                          filled: true,
+                          fillColor: theme.colorScheme.surface,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(18),
+                            borderSide: BorderSide(
+                              color: theme.colorScheme.primary.withValues(
+                                alpha: 0.12,
+                              ),
                             ),
                           ),
                         ),
+                        icon: const Icon(Icons.expand_more),
+                        items: projects
+                            .map(
+                              (project) => DropdownMenuItem(
+                                value: project.id,
+                                child: Text(project.name),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (value) {
+                          if (value != null) {
+                            state.switchProject(value);
+                          }
+                        },
                       ),
-                      icon: const Icon(Icons.expand_more),
-                      items: projects
-                          .map(
-                            (project) => DropdownMenuItem(
-                              value: project.id,
-                              child: Text(project.name),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (value) {
-                        if (value != null) {
-                          state.switchProject(value);
-                        }
-                      },
                     ),
                   ),
                 ],

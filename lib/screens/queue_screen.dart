@@ -765,7 +765,8 @@ class QueueScreen extends StatelessWidget {
       }
     }
 
-    textController.dispose();
+    // Delay disposal to ensure the bottom sheet is fully torn down
+    Future.microtask(() => textController.dispose());
   }
 
   String _formatDate(DateTime now) {

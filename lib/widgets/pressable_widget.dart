@@ -29,6 +29,7 @@ class _PressableWidgetState extends State<PressableWidget> {
     final disableAnimations = MediaQuery.disableAnimationsOf(context);
 
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTapDown: widget.onPressed != null ? (_) {
         setState(() => _isPressed = true);
       } : null,

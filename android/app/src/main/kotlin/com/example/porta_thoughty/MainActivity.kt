@@ -7,18 +7,18 @@ import android.content.Context
 import android.appwidget.AppWidgetManager
 import android.content.Intent
 import android.content.ComponentName
-import android.os.Bundle // Import Bundle
 import com.example.porta_thoughty.widget.RecordWidgetProvider
 
 class MainActivity : FlutterActivity() {
     private val CHANNEL = "com.example.porta_thoughty/widget"
-    private lateinit var methodChannel: MethodChannel // Declare methodChannel
+    private lateinit var methodChannel: MethodChannel
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
-        methodChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL) // Initialize methodChannel
-        methodChannel.setMethodCallHandler {
-            call, result ->
+
+        // Widget channel
+        methodChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
+        methodChannel.setMethodCallHandler { call, result ->
             if (call.method == "updateWidget") {
                 val isRecording = call.argument<Boolean>("isRecording") ?: false
                 updateRecordWidget(this, isRecording)

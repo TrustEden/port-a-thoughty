@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -10,6 +11,7 @@ import '../services/groq_file_processor.dart';
 import '../services/ocr_service.dart';
 import '../state/app_state.dart';
 import '../widgets/app_header.dart';
+import '../widgets/pressable_widget.dart';
 import '../widgets/project_selector.dart';
 import '../widgets/recent_note_list.dart';
 
@@ -117,9 +119,13 @@ class _SpeechCaptureCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            isRecording
-                ? 'Listening... tap the button to stop.'
-                : 'Let me write that down! Tap to record.',
+            state.settings.pressAndHoldToRecord
+                ? (isRecording
+                    ? 'Listening... release to stop.'
+                    : 'Let me write that down! Hold to record.')
+                : (isRecording
+                    ? 'Listening... tap the button to stop.'
+                    : 'Let me write that down! Tap to record.'),
             style: GoogleFonts.comicNeue(
               textStyle: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
@@ -128,17 +134,34 @@ class _SpeechCaptureCard extends StatelessWidget {
           ),
           const SizedBox(height: 28),
           Center(
-            child: _RecordingButton(
-              isRecording: isRecording,
-              onPressed: () async {
-                if (isRecording) {
-                  await state.stopRecording();
-                }
-                else {
-                  await state.startRecording();
-                }
-              },
-            ),
+            child: state.settings.pressAndHoldToRecord
+                ? _RecordingButton(
+                    isRecording: isRecording,
+                    onLongPressStart: (_) async {
+                      if (!isRecording) {
+                        HapticFeedback.heavyImpact();
+                        await state.startRecording();
+                      }
+                    },
+                    onLongPressEnd: (_) async {
+                      if (isRecording) {
+                        HapticFeedback.mediumImpact();
+                        await state.stopRecording();
+                      }
+                    },
+                  )
+                : _RecordingButton(
+                    isRecording: isRecording,
+                    onPressed: () async {
+                      if (isRecording) {
+                        HapticFeedback.mediumImpact();
+                        await state.stopRecording();
+                      } else {
+                        HapticFeedback.heavyImpact();
+                        await state.startRecording();
+                      }
+                    },
+                  ),
           ),
           const SizedBox(height: 20),
         ],
@@ -148,60 +171,92 @@ class _SpeechCaptureCard extends StatelessWidget {
 }
 
 class _RecordingButton extends StatelessWidget {
-  const _RecordingButton({required this.isRecording, required this.onPressed});
+  const _RecordingButton({
+    required this.isRecording,
+    this.onPressed,
+    this.onLongPressStart,
+    this.onLongPressEnd,
+  });
 
   final bool isRecording;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
+  final Function(LongPressStartDetails)? onLongPressStart;
+  final Function(LongPressEndDetails)? onLongPressEnd;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final disableAnimations = MediaQuery.disableAnimationsOf(context);
     final ringColor = isRecording
         ? theme.colorScheme.error
         : theme.colorScheme.primary.withValues(alpha: 0.65);
     final innerColor = isRecording
         ? theme.colorScheme.error
         : theme.colorScheme.primary;
-    return GestureDetector(
-      onTap: onPressed,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 220),
-        curve: Curves.easeInOut,
-        height: 140,
-        width: 140,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: RadialGradient(
-            colors: [
-              ringColor.withValues(alpha: 0.1),
-              ringColor.withValues(alpha: 0.25),
-              ringColor,
+    return Semantics(
+      label: isRecording ? 'Stop recording' : 'Start voice recording',
+      hint: isRecording ? 'Tap to stop recording your thoughts' : 'Tap to record your thoughts with voice',
+      button: true,
+      child: GestureDetector(
+        onTap: onPressed,
+        onLongPressStart: onLongPressStart,
+        onLongPressEnd: onLongPressEnd,
+        child: AnimatedContainer(
+          duration: disableAnimations ? Duration.zero : const Duration(milliseconds: 250),
+          curve: Curves.easeOutCubic,
+          height: 140,
+          width: 140,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: RadialGradient(
+              colors: [
+                ringColor.withValues(alpha: 0.1),
+                ringColor.withValues(alpha: 0.25),
+                ringColor,
+              ],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: ringColor.withValues(alpha: 0.35),
+                blurRadius: isRecording ? 35 : 30,
+                spreadRadius: isRecording ? 3 : 2,
+              ),
             ],
           ),
-          boxShadow: [
-            BoxShadow(
-              color: ringColor.withValues(alpha: 0.35),
-              blurRadius: 30,
-              spreadRadius: 2,
+          child: Center(
+            child: AnimatedContainer(
+              duration: disableAnimations ? Duration.zero : const Duration(milliseconds: 200),
+              curve: Curves.easeOutBack,
+              height: isRecording ? 72 : 86,
+              width: isRecording ? 72 : 86,
+              child: AnimatedSwitcher(
+                duration: disableAnimations ? Duration.zero : const Duration(milliseconds: 250),
+                transitionBuilder: (child, animation) {
+                  return ScaleTransition(
+                    scale: animation,
+                    child: FadeTransition(
+                      opacity: animation,
+                      child: child,
+                    ),
+                  );
+                },
+                child: isRecording
+                    ? Image.asset(
+                        key: const ValueKey('stop'),
+                        'assets/stoprecording.png',
+                        width: 34,
+                        height: 34,
+                        gaplessPlayback: true,
+                      )
+                    : Image.asset(
+                        key: const ValueKey('mic'),
+                        'assets/mic.png',
+                        width: 34,
+                        height: 34,
+                        gaplessPlayback: true,
+                      ),
+              ),
             ),
-          ],
-        ),
-        child: Center(
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            height: isRecording ? 72 : 86,
-            width: isRecording ? 72 : 86,
-            child: isRecording
-                ? Image.asset(
-                    'assets/stoprecording.png',
-                    width: 34,
-                    height: 34,
-                  )
-                : Image.asset(
-                    'assets/mic.png',
-                    width: 34,
-                    height: 34,
-                  ),
           ),
         ),
       ),
@@ -620,10 +675,13 @@ class _QuickActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return InkWell(
-      borderRadius: BorderRadius.circular(18),
-      onTap: onTap,
-      child: Ink(
+    return Semantics(
+      label: label,
+      hint: 'Tap to $label',
+      button: true,
+      child: PressableWidget(
+        onPressed: onTap,
+        child: Ink(
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.82),
@@ -650,6 +708,7 @@ class _QuickActionButton extends StatelessWidget {
                   imageAsset,
                   width: width,
                   height: height,
+                  gaplessPlayback: true,
                 ),
               ),
             ),
@@ -663,6 +722,7 @@ class _QuickActionButton extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }

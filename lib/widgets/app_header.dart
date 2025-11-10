@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+import '../screens/settings_screen.dart';
 
 class AppHeader extends StatelessWidget {
   const AppHeader({
@@ -61,6 +64,29 @@ class AppHeader extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        Semantics(
+          label: 'Settings',
+          hint: 'Open app settings',
+          button: true,
+          child: IconButton(
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const SettingsScreen(),
+                ),
+              );
+            },
+            icon: Icon(
+              Icons.settings_outlined,
+              color: theme.colorScheme.primary,
+              size: 28,
+            ),
+            tooltip: 'Settings',
           ),
         ),
       ],

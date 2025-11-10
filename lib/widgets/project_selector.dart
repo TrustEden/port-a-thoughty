@@ -195,13 +195,16 @@ class ProjectSelector extends StatelessWidget {
               const SizedBox(height: 14),
               Row(
                 children: [
-                  Image.asset(
-                    'assets/projectsicon.png',
-                    width: 52,
-                    height: 52,
-                    cacheWidth: (52 * MediaQuery.of(context).devicePixelRatio).round(),
-                    cacheHeight: (52 * MediaQuery.of(context).devicePixelRatio).round(),
-                    gaplessPlayback: true,
+                  Hero(
+                    tag: 'project-icon',
+                    child: Image.asset(
+                      'assets/projectsicon.png',
+                      width: 52,
+                      height: 52,
+                      cacheWidth: (52 * MediaQuery.of(context).devicePixelRatio).round(),
+                      cacheHeight: (52 * MediaQuery.of(context).devicePixelRatio).round(),
+                      gaplessPlayback: true,
+                    ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(

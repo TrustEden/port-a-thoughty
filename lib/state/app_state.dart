@@ -631,4 +631,43 @@ User notes:''';
     await _database.saveSettings(_settings);
     notifyListeners();
   }
+
+  Future<void> updateApiKeys({
+    String? openai,
+    String? gemini,
+    String? anthropic,
+    String? groq,
+  }) async {
+    await _ensureInitialized();
+    _settings = _settings.copyWith(
+      openaiApiKey: openai,
+      geminiApiKey: gemini,
+      anthropicApiKey: anthropic,
+      groqApiKey: groq,
+    );
+    await _database.saveSettings(_settings);
+    notifyListeners();
+  }
+
+  Future<void> updatePressAndHoldToRecord(bool enabled) async {
+    await _ensureInitialized();
+    if (_settings.pressAndHoldToRecord == enabled) return;
+    _settings = _settings.copyWith(pressAndHoldToRecord: enabled);
+    await _database.saveSettings(_settings);
+    notifyListeners();
+  }
+
+  /// Refreshes the queue by reloading notes from database
+  Future<void> refreshQueue() async {
+    await _ensureInitialized();
+    _notes = await _database.fetchActiveNotes(_activeProjectId);
+    notifyListeners();
+  }
+
+  /// Refreshes the docs list by reloading from database
+  Future<void> refreshDocs() async {
+    await _ensureInitialized();
+    _docs = await _database.fetchDocs(_activeProjectId);
+    notifyListeners();
+  }
 }

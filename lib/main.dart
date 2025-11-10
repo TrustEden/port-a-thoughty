@@ -52,18 +52,18 @@ class _HomeShellState extends State<HomeShell> {
 
   static final _destinations = [
     NavigationDestination(
-      icon: Image.asset('assets/queue.png', width: 48, height: 48),
-      selectedIcon: Image.asset('assets/queue.png', width: 48, height: 48),
+      icon: Image.asset('assets/queue.png', width: 48, height: 48, gaplessPlayback: true),
+      selectedIcon: Image.asset('assets/queue.png', width: 48, height: 48, gaplessPlayback: true),
       label: 'Raw Notes',
     ),
     NavigationDestination(
-      icon: Image.asset('assets/capture.png', width: 48, height: 48),
-      selectedIcon: Image.asset('assets/capture.png', width: 48, height: 48),
+      icon: Image.asset('assets/capture.png', width: 48, height: 48, gaplessPlayback: true),
+      selectedIcon: Image.asset('assets/capture.png', width: 48, height: 48, gaplessPlayback: true),
       label: 'Capture',
     ),
     NavigationDestination(
-      icon: Image.asset('assets/docsnotes.png', width: 48, height: 48),
-      selectedIcon: Image.asset('assets/docsnotes.png', width: 48, height: 48),
+      icon: Image.asset('assets/docsnotes.png', width: 48, height: 48, gaplessPlayback: true),
+      selectedIcon: Image.asset('assets/docsnotes.png', width: 48, height: 48, gaplessPlayback: true),
       label: 'Docs',
     ),
   ];
@@ -239,15 +239,21 @@ class _HomeShellState extends State<HomeShell> {
   }
 
   void _onDestinationSelected(int index) {
+    final disableAnimations = MediaQuery.disableAnimationsOf(context);
     _pageController.animateToPage(
       index,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
+      duration: disableAnimations
+          ? Duration.zero
+          : const Duration(milliseconds: 300),
+      curve: const Cubic(0.4, 0.0, 0.2, 1.0), // Material motion curve
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final appState = context.watch<PortaThoughtyState>();
+
+    // Normal full UI
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(

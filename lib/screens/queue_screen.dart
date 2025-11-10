@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../models/note.dart';
@@ -18,51 +21,108 @@ class QueueScreen extends StatelessWidget {
 
     return Stack(
       children: [
-        ListView(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 160),
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Processing queue',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+        RefreshIndicator(
+          onRefresh: () async {
+            HapticFeedback.lightImpact();
+            await state.refreshQueue();
+          },
+          child: CustomScrollView(
+            slivers: [
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+              sliver: SliverToBoxAdapter(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Processing queue',
+                          style: Theme.of(
+                            context,
+                          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                        TextButton(
+                          onPressed: selectedCount > 0
+                              ? () => state.clearSelection()
+                              : null,
+                          child: const Text('Clear selection'),
+                        ),
+                      ],
+                    ),
+                    if (selectedCount > 0)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 12),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Chip(
+                            avatar: const Icon(Icons.check_circle_outline, size: 16),
+                            label: Text('$selectedCount selected'),
+                          ),
+                        ),
+                      ),
+                    const SizedBox(height: 16),
+                  ],
                 ),
-                TextButton(
-                  onPressed: selectedCount > 0
-                      ? () => state.clearSelection()
-                      : null,
-                  child: const Text('Clear selection'),
-                ),
-              ],
+              ),
             ),
-            if (selectedCount > 0)
-              Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Chip(
-                    avatar: const Icon(Icons.check_circle_outline, size: 16),
-                    label: Text('$selectedCount selected'),
+            if (notes.isEmpty)
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 160),
+                sliver: const SliverToBoxAdapter(
+                  child: _EmptyQueuePlaceholder(),
+                ),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 160),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final note = notes[index];
+                      return Dismissible(
+                        key: Key('note_${note.id}'),
+                        direction: DismissDirection.endToStart,
+                        confirmDismiss: (direction) async {
+                          HapticFeedback.mediumImpact();
+                          return true;
+                        },
+                        onDismissed: (direction) {
+                          _handleDelete(context, state, note);
+                        },
+                        background: Container(
+                          alignment: Alignment.centerRight,
+                          padding: const EdgeInsets.only(right: 20),
+                          margin: const EdgeInsets.symmetric(vertical: 10),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.error,
+                            borderRadius: BorderRadius.circular(26),
+                          ),
+                          child: const Icon(
+                            Icons.delete_outline,
+                            color: Colors.white,
+                            size: 32,
+                          ),
+                        ),
+                        child: _QueueNoteCard(
+                          note: note,
+                          selected: state.selectedNoteIds.contains(note.id),
+                          onToggle: () {
+                            HapticFeedback.lightImpact();
+                            state.toggleNoteSelection(note.id);
+                          },
+                          onDelete: () => _handleDelete(context, state, note),
+                          onNoteTap: () => _showNoteEditor(context, state, note),
+                        ),
+                      );
+                    },
+                    childCount: notes.length,
                   ),
                 ),
               ),
-            const SizedBox(height: 16),
-            if (notes.isEmpty)
-              const _EmptyQueuePlaceholder()
-            else
-              ...notes.map(
-                (note) => _QueueNoteCard(
-                  note: note,
-                  selected: state.selectedNoteIds.contains(note.id),
-                  onToggle: () => state.toggleNoteSelection(note.id),
-                  onDelete: () => _handleDelete(context, state, note),
-                ),
-              ),
-            const SizedBox(height: 120),
           ],
+          ),
         ),
         Positioned.fill(
           child: Align(
@@ -71,25 +131,35 @@ class QueueScreen extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
               child: SafeArea(
                 top: false,
-                child: FilledButton.icon(
-                  icon: const Icon(Icons.auto_mode),
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(58),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(22),
+                child: Semantics(
+                  label: selectedCount == 0
+                      ? 'Select notes to process'
+                      : 'Process $selectedCount note${selectedCount == 1 ? '' : 's'} into a document',
+                  hint: selectedCount == 0
+                      ? 'Select at least one note first'
+                      : 'Tap to compile selected notes into a markdown document',
+                  button: true,
+                  enabled: selectedCount > 0,
+                  child: FilledButton.icon(
+                    icon: const Icon(Icons.auto_mode),
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(58),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(22),
+                      ),
+                      textStyle: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                    textStyle: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
+                    onPressed: selectedCount == 0
+                        ? null
+                        : () => _beginProcessing(context),
+                    label: Text(
+                      selectedCount == 0
+                          ? 'Select notes to process'
+                          : 'Process ${selectedCount == 1 ? 'selected note' : '$selectedCount notes'}',
                     ),
-                  ),
-                  onPressed: selectedCount == 0
-                      ? null
-                      : () => _beginProcessing(context),
-                  label: Text(
-                    selectedCount == 0
-                        ? 'Select notes to process'
-                        : 'Process ${selectedCount == 1 ? 'selected note' : '$selectedCount notes'}',
                   ),
                 ),
               ),
@@ -105,6 +175,7 @@ class QueueScreen extends StatelessWidget {
     PortaThoughtyState state,
     Note note,
   ) async {
+    HapticFeedback.mediumImpact();
     final success = await state.deleteNote(note);
     if (!success) return;
     if (!context.mounted) return;
@@ -117,6 +188,7 @@ class QueueScreen extends StatelessWidget {
         action: SnackBarAction(
           label: 'Undo',
           onPressed: () {
+            HapticFeedback.lightImpact();
             state.undoNoteDeletion();
           },
         ),
@@ -125,6 +197,7 @@ class QueueScreen extends StatelessWidget {
   }
 
   Future<void> _beginProcessing(BuildContext context) async {
+    HapticFeedback.mediumImpact();
     final state = context.read<PortaThoughtyState>();
     final customTitle = await _showProcessSheet(context, state);
     if (customTitle == null) return;
@@ -137,20 +210,24 @@ class QueueScreen extends StatelessWidget {
     final messenger = ScaffoldMessenger.of(context);
     messenger.hideCurrentSnackBar();
     if (result.success) {
+      HapticFeedback.lightImpact();
       messenger.showSnackBar(
         SnackBar(
           content: const Text('Draft doc created. Undo available for 7 days.'),
           action: SnackBarAction(
             label: 'Undo',
             onPressed: () {
+              HapticFeedback.lightImpact();
               state.undoLastProcess();
             },
           ),
         ),
       );
     } else if (result.error != null && result.error!.isNotEmpty) {
+      HapticFeedback.mediumImpact();
       messenger.showSnackBar(SnackBar(content: Text(result.error!)));
     } else {
+      HapticFeedback.mediumImpact();
       messenger.showSnackBar(
         const SnackBar(
           content: Text('Processing failed. Try again in a moment.'),
@@ -369,6 +446,329 @@ class QueueScreen extends StatelessWidget {
     return result;
   }
 
+  Future<void> _showNoteEditor(
+    BuildContext context,
+    PortaThoughtyState state,
+    Note note,
+  ) async {
+    final theme = Theme.of(context);
+    final textController = TextEditingController(text: note.text);
+    bool includeImage = note.includeImage;
+
+    // Determine editor configuration based on note type
+    final String title;
+    final IconData icon;
+    final Color accentColor;
+
+    switch (note.type) {
+      case NoteType.voice:
+        title = 'Edit voice note';
+        icon = Icons.mic;
+        accentColor = theme.colorScheme.primary;
+        break;
+      case NoteType.text:
+        title = 'Edit text note';
+        icon = Icons.edit_note;
+        accentColor = const Color(0xFFFB8C00);
+        break;
+      case NoteType.image:
+        title = 'Edit image note';
+        icon = Icons.image_outlined;
+        accentColor = const Color(0xFF8E24AA);
+        break;
+    }
+
+    final result = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              margin: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface,
+                borderRadius: BorderRadius.circular(28),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x26000000),
+                    blurRadius: 40,
+                    offset: Offset(0, 20),
+                  ),
+                ],
+              ),
+              child: SafeArea(
+                top: false,
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    left: 24,
+                    right: 24,
+                    top: 32,
+                    bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+                  ),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Header
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: accentColor.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(18),
+                              ),
+                              child: Icon(
+                                icon,
+                                color: accentColor,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                title,
+                                style: theme.textTheme.titleLarge?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Low confidence warning for voice notes
+                        if (note.type == NoteType.voice && note.flaggedLowConfidence)
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 20),
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.errorContainer.withValues(alpha: 0.3),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: theme.colorScheme.error.withValues(alpha: 0.3),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.warning_amber_rounded,
+                                  color: theme.colorScheme.error,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    'Low confidence transcription - please review carefully',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: theme.colorScheme.error,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                        // Image preview for image notes
+                        if (note.type == NoteType.image && note.imagePath != null) ...[
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                maxHeight: MediaQuery.of(context).size.height * 0.3,
+                              ),
+                              child: Image.file(
+                                File(note.imagePath!),
+                                fit: BoxFit.contain,
+                                width: double.infinity,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          // Include image checkbox
+                          InkWell(
+                            borderRadius: BorderRadius.circular(12),
+                            onTap: () {
+                              HapticFeedback.lightImpact();
+                              setModalState(() {
+                                includeImage = !includeImage;
+                              });
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              child: Row(
+                                children: [
+                                  Checkbox(
+                                    value: includeImage,
+                                    onChanged: (value) {
+                                      HapticFeedback.lightImpact();
+                                      setModalState(() {
+                                        includeImage = value ?? true;
+                                      });
+                                    },
+                                  ),
+                                  Expanded(
+                                    child: Text(
+                                      'Include image in processed document',
+                                      style: theme.textTheme.bodyLarge,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                        ],
+
+                        // Editable text
+                        Text(
+                          note.type == NoteType.image
+                              ? 'OCR Text'
+                              : note.type == NoteType.voice
+                                  ? 'Transcription'
+                                  : 'Note Text',
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: textController,
+                          maxLines: note.type == NoteType.image ? 8 : 12,
+                          autofocus: note.type == NoteType.text,
+                          decoration: InputDecoration(
+                            hintText: note.type == NoteType.image
+                                ? 'Edit the extracted text...'
+                                : note.type == NoteType.voice
+                                    ? 'Edit the transcription...'
+                                    : 'Edit your note...',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            filled: true,
+                            fillColor: theme.colorScheme.surfaceContainerHighest
+                                .withValues(alpha: 0.3),
+                          ),
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                        const SizedBox(height: 24),
+
+                        // Buttons
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: () {
+                                  HapticFeedback.lightImpact();
+                                  Navigator.of(context).pop(false);
+                                },
+                                style: OutlinedButton.styleFrom(
+                                  minimumSize: const Size.fromHeight(52),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  side: BorderSide(
+                                    color: theme.colorScheme.outline
+                                        .withValues(alpha: 0.5),
+                                  ),
+                                ),
+                                child: const Text(
+                                  'Cancel',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: FilledButton(
+                                onPressed: () {
+                                  HapticFeedback.mediumImpact();
+                                  Navigator.of(context).pop(true);
+                                },
+                                style: FilledButton.styleFrom(
+                                  minimumSize: const Size.fromHeight(52),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                ),
+                                child: const Text(
+                                  'Save changes',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    // Save changes if user confirmed
+    if (result == true && context.mounted) {
+      final updatedNote = note.copyWith(
+        text: textController.text,
+        includeImage: note.type == NoteType.image ? includeImage : note.includeImage,
+      );
+      await state.updateNote(updatedNote);
+
+      // Show feedback about image inclusion change (for image notes only)
+      if (note.type == NoteType.image &&
+          note.includeImage != includeImage &&
+          context.mounted) {
+        final messenger = ScaffoldMessenger.of(context);
+        messenger.hideCurrentSnackBar();
+        if (!includeImage) {
+          messenger.showSnackBar(
+            SnackBar(
+              content: const Text('Image will not be included in document'),
+              action: SnackBarAction(
+                label: 'Undo',
+                onPressed: () {
+                  HapticFeedback.lightImpact();
+                  final revertedNote = updatedNote.copyWith(includeImage: true);
+                  state.updateNote(revertedNote);
+                },
+              ),
+            ),
+          );
+        } else {
+          messenger.showSnackBar(
+            const SnackBar(
+              content: Text('Image will be included in document'),
+            ),
+          );
+        }
+      } else if (context.mounted) {
+        // Show generic save confirmation for text/voice notes
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Note updated'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+
+    // Delay disposal to ensure the bottom sheet is fully torn down
+    Future.microtask(() => textController.dispose());
+  }
+
   String _formatDate(DateTime now) {
     const monthNames = [
       'Jan',
@@ -394,12 +794,14 @@ class _QueueNoteCard extends StatelessWidget {
     required this.selected,
     required this.onToggle,
     this.onDelete,
+    this.onNoteTap,
   });
 
   final Note note;
   final bool selected;
   final VoidCallback onToggle;
   final Future<void> Function()? onDelete;
+  final VoidCallback? onNoteTap;
 
   @override
   Widget build(BuildContext context) {
@@ -426,7 +828,16 @@ class _QueueNoteCard extends StatelessWidget {
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(26),
-        onTap: onToggle,
+        onTap: () {
+          // If we have a note tap handler, show the editor
+          // Otherwise toggle selection
+          if (onNoteTap != null) {
+            HapticFeedback.mediumImpact();
+            onNoteTap!();
+          } else {
+            onToggle();
+          }
+        },
         child: Padding(
           padding: const EdgeInsets.fromLTRB(18, 18, 20, 22),
           child: Column(
@@ -463,6 +874,7 @@ class _QueueNoteCard extends StatelessWidget {
                       fit: BoxFit.contain,
                       color: theme.colorScheme.onSurfaceVariant,
                       colorBlendMode: BlendMode.srcIn,
+                      gaplessPlayback: true,
                     ),
                   ),
                 ],
@@ -608,25 +1020,41 @@ class _EmptyQueuePlaceholder extends StatelessWidget {
           color: theme.colorScheme.primary.withValues(alpha: 0.1),
         ),
       ),
-      child: Column(
-        children: [
-          Image.asset('assets/bulb icon.png', height: 72, fit: BoxFit.contain),
-          const SizedBox(height: 16),
-          Text(
-            'Queue is clear',
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0.0, end: 1.0),
+        duration: MediaQuery.disableAnimationsOf(context)
+            ? Duration.zero
+            : const Duration(milliseconds: 600),
+        curve: Curves.elasticOut,
+        builder: (context, value, child) {
+          return Transform.scale(
+            scale: value,
+            child: Opacity(
+              opacity: value.clamp(0.0, 1.0),  // Clamp to valid range for elasticOut curve
+              child: child,
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Capture new thoughts from the mic tab and they will queue up here ready for AI cleanup.',
-            textAlign: TextAlign.center,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+          );
+        },
+        child: Column(
+          children: [
+            Image.asset('assets/bulb icon.png', height: 72, fit: BoxFit.contain, gaplessPlayback: true),
+            const SizedBox(height: 16),
+            Text(
+              'Queue is clear',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 8),
+            Text(
+              'Capture new thoughts from the mic tab and they will queue up here ready for AI cleanup.',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

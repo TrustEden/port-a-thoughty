@@ -96,4 +96,17 @@ class MainActivity : FlutterActivity() {
             false
         }
     }
+
+    override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // Notify Flutter about PiP state change if needed
+            pipChannel.invokeMethod("onPipModeChanged", isInPictureInPictureMode)
+        }
+    }
+
+    override fun onUserLeaveHint() {
+        // Don't call super to prevent automatic PiP on user leaving
+        // We handle PiP entry from Flutter side
+    }
 }

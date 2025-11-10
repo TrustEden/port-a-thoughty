@@ -396,6 +396,7 @@ class _PipRecordingWidgetState extends State<_PipRecordingWidget> {
   static const _tripleTapWindow = Duration(milliseconds: 500);
 
   void _handleTap() {
+    debugPrint('PiP: Tap detected at ${DateTime.now()}');
     final now = DateTime.now();
 
     // Add current tap
@@ -406,14 +407,18 @@ class _PipRecordingWidgetState extends State<_PipRecordingWidget> {
       (time) => now.difference(time) > _tripleTapWindow,
     );
 
+    debugPrint('PiP: Tap count in window: ${_tapTimes.length}');
+
     // Check for triple tap
     if (_tapTimes.length >= 3) {
+      debugPrint('PiP: Triple tap detected! Closing PiP');
       HapticFeedback.heavyImpact();
       _tapTimes.clear();
       // Exit PiP mode by finishing the activity
       SystemNavigator.pop();
     } else {
       // Single tap - toggle recording
+      debugPrint('PiP: Single/double tap - toggling recording. Currently recording: ${widget.state.isRecording}');
       HapticFeedback.mediumImpact();
       if (widget.state.isRecording) {
         widget.state.stopRecording();

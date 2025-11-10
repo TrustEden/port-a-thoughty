@@ -51,5 +51,11 @@
 		<false/>
 		<key>NSPhotoLibraryUsageDescription</key>
 		<string>Port-A-Thoughty needs access to your photo library to save shared images as notes.</string>
+		<key>NSCameraUsageDescription</key>
+		<string>Port-A-Thoughty needs access to your camera to capture images for notes.</string>
+		<key>NSMicrophoneUsageDescription</key>
+		<string>Port-A-Thoughty needs access to your microphone to record voice notes.</string>
+		<key>NSSpeechRecognitionUsageDescription</key>
+		<string>Port-A-Thoughty needs speech recognition to convert your voice notes to text.</string>
 	</dict>
 </plist>

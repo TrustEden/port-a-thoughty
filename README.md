@@ -46,7 +46,11 @@ A Flutter mobile app for capturing fleeting thoughts through voice, text, and im
 <table>
   <tr>
     <td><img src="docs/Screenshot_20251107_115245.png" width="250"/></td>
-    
+  </tr>
+  <tr>
+    <td align="center"><b>Queue Screen</b><br/>Batch processing notes</td>
+  </tr>
+</table>
 
 ## 🏗️ Architecture
 
@@ -82,8 +86,8 @@ A Flutter mobile app for capturing fleeting thoughts through voice, text, and im
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/porta-a-thoughty.git
-   cd porta-a-thoughty
+   git clone https://github.com/TrustEden/port-a-thoughty.git
+   cd port-a-thoughty
    ```
 
 2. **Install dependencies**

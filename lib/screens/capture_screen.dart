@@ -355,7 +355,7 @@ class _QuickActionsRow extends StatelessWidget {
           ),
           child: SafeArea(
             top: false,
-            child: Padding(
+            child: SingleChildScrollView(
               padding: EdgeInsets.only(
                 left: 24,
                 right: 24,

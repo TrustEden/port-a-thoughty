@@ -43,11 +43,25 @@ class QueueScreen extends StatelessWidget {
                             context,
                           ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
                         ),
-                        TextButton(
-                          onPressed: selectedCount > 0
-                              ? () => state.clearSelection()
-                              : null,
-                          child: const Text('Clear selection'),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            TextButton(
+                              onPressed: notes.isNotEmpty && selectedCount < notes.length
+                                  ? () {
+                                      HapticFeedback.lightImpact();
+                                      state.selectAllNotes();
+                                    }
+                                  : null,
+                              child: const Text('Select all'),
+                            ),
+                            TextButton(
+                              onPressed: selectedCount > 0
+                                  ? () => state.clearSelection()
+                                  : null,
+                              child: const Text('Clear selection'),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -270,8 +284,13 @@ class QueueScreen extends StatelessWidget {
           ),
           child: SafeArea(
             top: false,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
+            child: SingleChildScrollView(
+              padding: EdgeInsets.only(
+                left: 24,
+                right: 24,
+                top: 32,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,

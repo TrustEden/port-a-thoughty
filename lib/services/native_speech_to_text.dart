@@ -30,12 +30,14 @@ class NativeSpeechToTextService {
   void startListening({
     Duration? listenFor,
     Duration? pauseFor,
+    ListenMode? listenMode,
   }) {
     if (!_isListening) {
       _speechToText.listen(
         onResult: _handleResult,
         listenFor: listenFor ?? const Duration(minutes: 2),
         pauseFor: pauseFor ?? const Duration(seconds: 8),
+        listenMode: listenMode ?? ListenMode.confirmation,
       );
       _setListening(true);
     }

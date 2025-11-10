@@ -89,10 +89,27 @@ class QueueScreen extends StatelessWidget {
                         direction: DismissDirection.endToStart,
                         confirmDismiss: (direction) async {
                           HapticFeedback.mediumImpact();
-                          return true;
+                          return await _confirmDeleteNote(context, note);
                         },
-                        onDismissed: (direction) {
-                          _handleDelete(context, state, note);
+                        onDismissed: (direction) async {
+                          final success = await state.deleteNote(note);
+                          if (!success) return;
+                          if (!context.mounted) return;
+
+                          final messenger = ScaffoldMessenger.of(context);
+                          messenger.hideCurrentSnackBar();
+                          messenger.showSnackBar(
+                            SnackBar(
+                              content: const Text('Note removed from queue.'),
+                              action: SnackBarAction(
+                                label: 'Undo',
+                                onPressed: () {
+                                  HapticFeedback.lightImpact();
+                                  state.undoNoteDeletion();
+                                },
+                              ),
+                            ),
+                          );
                         },
                         background: Container(
                           alignment: Alignment.centerRight,
@@ -173,12 +190,29 @@ class QueueScreen extends StatelessWidget {
     );
   }
 
+  Future<bool> _confirmDeleteNote(BuildContext context, Note note) async {
+    return await AppBottomSheet.showConfirmation(
+          context: context,
+          title: 'Delete note?',
+          message: 'Remove "${note.preview}" from the queue?\nThis can be undone.',
+          confirmLabel: 'Delete',
+          icon: Icons.delete_outline,
+          isDestructive: true,
+        ) ??
+        false;
+  }
+
   Future<void> _handleDelete(
     BuildContext context,
     PortaThoughtyState state,
     Note note,
   ) async {
     HapticFeedback.mediumImpact();
+
+    // Show confirmation
+    final confirmed = await _confirmDeleteNote(context, note);
+    if (!confirmed) return;
+
     final success = await state.deleteNote(note);
     if (!success) return;
     if (!context.mounted) return;

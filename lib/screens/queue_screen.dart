@@ -1030,7 +1030,7 @@ class _EmptyQueuePlaceholder extends StatelessWidget {
           return Transform.scale(
             scale: value,
             child: Opacity(
-              opacity: value,
+              opacity: value.clamp(0.0, 1.0),  // Clamp to valid range for elasticOut curve
               child: child,
             ),
           );

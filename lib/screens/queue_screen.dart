@@ -34,49 +34,38 @@ class QueueScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Text(
+                      'Processing queue',
+                      style: Theme.of(
+                        context,
+                      ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 12),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          'Processing queue',
-                          style: Theme.of(
-                            context,
-                          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+                        TextButton(
+                          onPressed: notes.isNotEmpty && selectedCount < notes.length
+                              ? () {
+                                  HapticFeedback.lightImpact();
+                                  state.selectAllNotes();
+                                }
+                              : null,
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                          ),
+                          child: const Text('Select all'),
                         ),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            TextButton(
-                              onPressed: notes.isNotEmpty && selectedCount < notes.length
-                                  ? () {
-                                      HapticFeedback.lightImpact();
-                                      state.selectAllNotes();
-                                    }
-                                  : null,
-                              child: const Text('Select all'),
+                        if (selectedCount > 0)
+                          TextButton(
+                            onPressed: () => state.clearSelection(),
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 12),
                             ),
-                            TextButton(
-                              onPressed: selectedCount > 0
-                                  ? () => state.clearSelection()
-                                  : null,
-                              child: const Text('Clear selection'),
-                            ),
-                          ],
-                        ),
+                            child: const Text('Clear selection'),
+                          ),
                       ],
                     ),
-                    if (selectedCount > 0)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 12),
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: Chip(
-                            avatar: const Icon(Icons.check_circle_outline, size: 16),
-                            label: Text('$selectedCount selected'),
-                          ),
-                        ),
-                      ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 8),
                   ],
                 ),
               ),

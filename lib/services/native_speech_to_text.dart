@@ -27,12 +27,15 @@ class NativeSpeechToTextService {
     return hasPermission;
   }
 
-  void startListening() {
+  void startListening({
+    Duration? listenFor,
+    Duration? pauseFor,
+  }) {
     if (!_isListening) {
       _speechToText.listen(
         onResult: _handleResult,
-        listenFor: const Duration(minutes: 2),
-        pauseFor: const Duration(seconds: 8),
+        listenFor: listenFor ?? const Duration(minutes: 2),
+        pauseFor: pauseFor ?? const Duration(seconds: 8),
       );
       _setListening(true);
     }

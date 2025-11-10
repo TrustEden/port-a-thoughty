@@ -282,7 +282,19 @@ User notes:''';
     try {
       final hasPermission = await _speechService.initialize();
       if (hasPermission) {
-        _speechService.startListening();
+        // For press-and-hold mode, use very long timeouts since user controls when to stop
+        // For tap mode, use the configured settings
+        final listenFor = _settings.pressAndHoldToRecord
+            ? const Duration(minutes: 30)
+            : _settings.maxRecordingDuration;
+        final pauseFor = _settings.pressAndHoldToRecord
+            ? const Duration(minutes: 30)
+            : _settings.silenceTimeout;
+
+        _speechService.startListening(
+          listenFor: listenFor,
+          pauseFor: pauseFor,
+        );
       } else {
         _lastRecordingError = 'Speech recognition permission not granted.';
         notifyListeners();

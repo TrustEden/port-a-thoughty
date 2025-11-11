@@ -730,7 +730,7 @@ class _QuickActionsRow extends StatelessWidget {
     );
 
     // Process file with Groq
-    final processor = GroqFileProcessor();
+    final processor = GroqFileProcessor(apiKey: state.settings.groqApiKey);
     String extractedContent = '';
 
     try {

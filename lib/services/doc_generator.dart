@@ -9,15 +9,14 @@ import 'groq_service.dart';
 
 /// Persists processed notes into Markdown documents under the project tree.
 class DocGenerator {
-  DocGenerator() : _groqService = GroqService();
-
-  final GroqService _groqService;
+  DocGenerator();
 
   /// Saves a Markdown document for the given [notes] and returns the file path.
   Future<String> saveMarkdown({
     required Project project,
     required String title,
     required List<Note> notes,
+    String? groqApiKey,
   }) async {
     if (notes.isEmpty) {
       throw ArgumentError.value(notes, 'notes', 'At least one note required.');
@@ -27,6 +26,7 @@ class DocGenerator {
       project: project,
       title: title,
       notes: notes,
+      groqApiKey: groqApiKey,
     );
     final supportDir = await getApplicationSupportDirectory();
     final docsDir = Directory(
@@ -47,6 +47,7 @@ class DocGenerator {
     required Project project,
     required String title,
     required List<Note> notes,
+    String? groqApiKey,
   }) async {
     final now = DateTime.now();
     final buffer = StringBuffer()
@@ -61,7 +62,8 @@ class DocGenerator {
 
     try {
       // Call Groq AI to process the notes
-      final result = await _groqService.processNotes(
+      final groqService = GroqService(apiKey: groqApiKey);
+      final result = await groqService.processNotes(
         project: project,
         notes: notes,
         documentTitle: title,

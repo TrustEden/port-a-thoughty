@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
 
@@ -13,14 +12,14 @@ class GroqFileProcessor {
 
   final String? _apiKey;
 
-  GroqFileProcessor() : _apiKey = dotenv.env['GROQ_API_KEY'];
+  GroqFileProcessor({String? apiKey}) : _apiKey = apiKey;
 
   /// Processes an uploaded file and returns extracted content as markdown
   /// Supports images (jpg, png, etc.) and will attempt to extract text/content
   Future<String> processFile(String filePath) async {
-    if (_apiKey == null || _apiKey.isEmpty || _apiKey == 'your_groq_api_key_here') {
+    if (_apiKey == null || _apiKey!.isEmpty) {
       throw Exception(
-        'Groq API key not configured. Please add your API key to the .env file.',
+        'Groq API key not configured. Please add your API key in Settings.',
       );
     }
 

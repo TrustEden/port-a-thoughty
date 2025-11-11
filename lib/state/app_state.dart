@@ -476,6 +476,7 @@ User notes:''';
         project: activeProject,
         title: title,
         notes: selectedNotes,
+        groqApiKey: _settings.groqApiKey,
       );
       final doc = ProcessedDoc(
         projectId: _activeProjectId,

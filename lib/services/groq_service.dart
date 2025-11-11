@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
 import '../models/note.dart';
@@ -12,7 +11,7 @@ class GroqService {
 
   final String? _apiKey;
 
-  GroqService() : _apiKey = dotenv.env['GROQ_API_KEY'];
+  GroqService({String? apiKey}) : _apiKey = apiKey;
 
   /// Processes notes using Groq AI to generate a summarized document
   Future<({String content, List<String> bulletPoints})> processNotes({
@@ -20,9 +19,9 @@ class GroqService {
     required List<Note> notes,
     required String documentTitle,
   }) async {
-    if (_apiKey == null || _apiKey.isEmpty || _apiKey == 'your_groq_api_key_here') {
+    if (_apiKey == null || _apiKey!.isEmpty) {
       throw Exception(
-        'Groq API key not configured. Please add your API key to the .env file.',
+        'Groq API key not configured. Please add your API key in Settings.',
       );
     }
 

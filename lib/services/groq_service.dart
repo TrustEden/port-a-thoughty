@@ -88,7 +88,7 @@ class GroqService {
 
     for (var i = 0; i < notes.length; i++) {
       buffer.writeln('Note ${i + 1} (${_noteTypeLabel(notes[i].type)}):');
-      buffer.writeln(notes[i].preview);
+      buffer.writeln(notes[i].text); // Send full text, not truncated preview
       buffer.writeln('');
     }
 

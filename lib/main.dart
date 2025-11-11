@@ -46,7 +46,7 @@ class HomeShell extends StatefulWidget {
 }
 
 class _HomeShellState extends State<HomeShell> {
-  int _index = 1;
+  int _index = 0;
   late PageController _pageController;
   static const platform = MethodChannel('com.example.porta_thoughty/widget'); // Define MethodChannel
   StreamSubscription? _intentMediaStreamSubscription;
@@ -54,14 +54,14 @@ class _HomeShellState extends State<HomeShell> {
 
   static final _destinations = [
     NavigationDestination(
-      icon: Image.asset('assets/queue.png', width: 48, height: 48, gaplessPlayback: true),
-      selectedIcon: Image.asset('assets/queue.png', width: 48, height: 48, gaplessPlayback: true),
-      label: 'Raw Notes',
-    ),
-    NavigationDestination(
       icon: Image.asset('assets/capture.png', width: 48, height: 48, gaplessPlayback: true),
       selectedIcon: Image.asset('assets/capture.png', width: 48, height: 48, gaplessPlayback: true),
       label: 'Capture',
+    ),
+    NavigationDestination(
+      icon: Image.asset('assets/queue.png', width: 48, height: 48, gaplessPlayback: true),
+      selectedIcon: Image.asset('assets/queue.png', width: 48, height: 48, gaplessPlayback: true),
+      label: 'Raw Notes',
     ),
     NavigationDestination(
       icon: Image.asset('assets/docsnotes.png', width: 48, height: 48, gaplessPlayback: true),
@@ -107,7 +107,7 @@ class _HomeShellState extends State<HomeShell> {
           print('Parsed URI: $uri');
           if (uri.host == 'home_widget' && uri.pathSegments.contains('record')) {
             print('URI matches recording intent. Navigating to CaptureScreen.');
-            _onDestinationSelected(1); // Navigate to CaptureScreen (now index 1)
+            _onDestinationSelected(0); // Navigate to CaptureScreen (now index 0)
             Future.delayed(const Duration(milliseconds: 350), () {
               if (mounted) {
                 print('Delayed execution: context mounted.');
@@ -173,7 +173,7 @@ class _HomeShellState extends State<HomeShell> {
     await state.addTextNote(text);
 
     // Navigate to Queue screen to show the new note
-    _onDestinationSelected(0);
+    _onDestinationSelected(1);
 
     // Show a snackbar confirmation
     if (mounted) {
@@ -232,7 +232,7 @@ class _HomeShellState extends State<HomeShell> {
     }
 
     // Navigate to Queue screen to show the new notes
-    _onDestinationSelected(0);
+    _onDestinationSelected(1);
 
     // Show a snackbar confirmation
     if (mounted) {
@@ -309,7 +309,7 @@ class _HomeShellState extends State<HomeShell> {
                 child: PageView(
                   controller: _pageController,
                   onPageChanged: _onPageChanged,
-                  children: const [QueueScreen(), CaptureScreen(), DocsScreen()],
+                  children: const [CaptureScreen(), QueueScreen(), DocsScreen()],
                 ),
               ),
             ],
@@ -334,8 +334,8 @@ class _FixedHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     // Different subtitles for each screen
     final subtitles = [
-      'Review and select notes to process into organized documents.',
       'Capture first, clean later. Porta-Thoughty keeps your brain clear.',
+      'Review and select notes to process into organized documents.',
       'Your processed documents, ready to share and review.',
     ];
 

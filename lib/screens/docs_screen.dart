@@ -107,12 +107,49 @@ class DocsScreen extends StatelessWidget {
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
                   final doc = docs[index];
-                  return _DocCard(
-                    doc: doc,
-                    onPreview: () => _showDocPreview(context, doc),
-                    onShare: () => _shareDoc(context, doc),
-                    onDelete: () => _confirmDeleteDoc(context, doc),
-                    canShare: (doc.markdownPath ?? '').isNotEmpty,
+                  final state = context.read<PortaThoughtyState>();
+                  return Dismissible(
+                    key: Key('doc_${doc.id}'),
+                    direction: DismissDirection.endToStart,
+                    confirmDismiss: (direction) async {
+                      HapticFeedback.mediumImpact();
+                      return await _confirmDeleteDoc(context, doc);
+                    },
+                    onDismissed: (direction) async {
+                      final success = await state.deleteDoc(doc);
+                      if (!context.mounted) return;
+
+                      if (success) {
+                        final messenger = ScaffoldMessenger.of(context);
+                        messenger.hideCurrentSnackBar();
+                        messenger.showSnackBar(
+                          const SnackBar(
+                            content: Text('Document deleted'),
+                          ),
+                        );
+                      }
+                    },
+                    background: Container(
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.only(right: 20),
+                      margin: const EdgeInsets.symmetric(vertical: 10),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.error,
+                        borderRadius: BorderRadius.circular(26),
+                      ),
+                      child: const Icon(
+                        Icons.delete_outline,
+                        color: Colors.white,
+                        size: 32,
+                      ),
+                    ),
+                    child: _DocCard(
+                      doc: doc,
+                      onPreview: () => _showDocPreview(context, doc),
+                      onShare: () => _shareDoc(context, doc),
+                      onDelete: () => _handleDeleteDoc(context, state, doc),
+                      canShare: (doc.markdownPath ?? '').isNotEmpty,
+                    ),
                   );
                 },
                 childCount: docs.length,
@@ -373,8 +410,8 @@ class DocsScreen extends StatelessWidget {
     }
   }
 
-  Future<void> _confirmDeleteDoc(BuildContext context, ProcessedDoc doc) async {
-    final confirmed = await AppBottomSheet.showConfirmation(
+  Future<bool> _confirmDeleteDoc(BuildContext context, ProcessedDoc doc) async {
+    return await AppBottomSheet.showConfirmation(
       context: context,
       title: 'Delete document?',
       message:
@@ -382,17 +419,29 @@ class DocsScreen extends StatelessWidget {
       confirmLabel: 'Delete',
       icon: Icons.delete_outline,
       isDestructive: true,
-    );
+    ) ?? false;
+  }
 
-    if (confirmed == true && context.mounted) {
-      final state = context.read<PortaThoughtyState>();
-      final success = await state.deleteDoc(doc);
-      if (success && context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Document deleted')),
-        );
-      }
-    }
+  Future<void> _handleDeleteDoc(
+    BuildContext context,
+    PortaThoughtyState state,
+    ProcessedDoc doc,
+  ) async {
+    HapticFeedback.mediumImpact();
+
+    // Show confirmation
+    final confirmed = await _confirmDeleteDoc(context, doc);
+    if (!confirmed) return;
+
+    final success = await state.deleteDoc(doc);
+    if (!success) return;
+    if (!context.mounted) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      const SnackBar(content: Text('Document deleted')),
+    );
   }
 
   Future<void> _showTokenEstimator(BuildContext context) {

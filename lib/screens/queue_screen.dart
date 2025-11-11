@@ -41,7 +41,9 @@ class QueueScreen extends StatelessWidget {
                       ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
                     ),
                     const SizedBox(height: 12),
-                    Row(
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
                       children: [
                         TextButton(
                           onPressed: notes.isNotEmpty && selectedCount < notes.length
@@ -62,6 +64,15 @@ class QueueScreen extends StatelessWidget {
                               padding: const EdgeInsets.symmetric(horizontal: 12),
                             ),
                             child: const Text('Clear selection'),
+                          ),
+                        if (selectedCount > 0)
+                          TextButton.icon(
+                            onPressed: () => _showMoveToProjectSheet(context, state),
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                            ),
+                            icon: const Icon(Icons.drive_file_move_outlined, size: 18),
+                            label: const Text('Move to project'),
                           ),
                       ],
                     ),
@@ -236,11 +247,12 @@ class QueueScreen extends StatelessWidget {
   Future<void> _beginProcessing(BuildContext context) async {
     HapticFeedback.mediumImpact();
     final state = context.read<PortaThoughtyState>();
-    final customTitle = await _showProcessSheet(context, state);
-    if (customTitle == null) return;
+    final processData = await _showProcessSheet(context, state);
+    if (processData == null) return;
 
     final result = await state.processSelectedNotes(
-      customTitle: customTitle.trim(),
+      customTitle: processData.title.trim(),
+      targetProjectId: processData.projectId,
     );
     if (!context.mounted) return;
 
@@ -273,7 +285,7 @@ class QueueScreen extends StatelessWidget {
     }
   }
 
-  Future<String?> _showProcessSheet(
+  Future<({String title, String projectId})?> _showProcessSheet(
     BuildContext context,
     PortaThoughtyState state,
   ) async {
@@ -286,13 +298,16 @@ class QueueScreen extends StatelessWidget {
     final suggestedTitle =
         '${project.name} Notes - ${_formatDate(DateTime.now())}';
     final controller = TextEditingController(text: suggestedTitle);
+    String selectedProjectId = state.activeProject.id;
 
-    final result = await showModalBottomSheet<String?>(
+    final result = await showModalBottomSheet<({String title, String projectId})?>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
-        return Container(
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
           margin: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
@@ -357,6 +372,61 @@ class QueueScreen extends StatelessWidget {
                           .colorScheme
                           .surfaceContainerHighest
                           .withValues(alpha: 0.3),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'Save to project',
+                    style: Theme.of(context)
+                        .textTheme
+                        .labelLarge
+                        ?.copyWith(fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .surfaceContainerHighest
+                          .withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .outline
+                            .withValues(alpha: 0.2),
+                      ),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        isExpanded: true,
+                        value: selectedProjectId,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        borderRadius: BorderRadius.circular(16),
+                        items: state.projects.map((proj) {
+                          return DropdownMenuItem(
+                            value: proj.id,
+                            child: Row(
+                              children: [
+                                Icon(
+                                  proj.icon ?? Icons.folder,
+                                  color: proj.color,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 12),
+                                Text(proj.name),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          if (value != null) {
+                            setModalState(() {
+                              selectedProjectId = value;
+                            });
+                          }
+                        },
+                      ),
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -457,8 +527,9 @@ class QueueScreen extends StatelessWidget {
                       const SizedBox(width: 12),
                       Expanded(
                         child: FilledButton(
-                          onPressed: () =>
-                              Navigator.of(context).pop(controller.text.trim()),
+                          onPressed: () => Navigator.of(context).pop(
+                            (title: controller.text.trim(), projectId: selectedProjectId),
+                          ),
                           style: FilledButton.styleFrom(
                             minimumSize: const Size.fromHeight(52),
                             shape: RoundedRectangleBorder(
@@ -482,6 +553,8 @@ class QueueScreen extends StatelessWidget {
           ),
         );
       },
+      );
+      },
     );
 
     // Delay disposal to ensure the bottom sheet animation is fully complete
@@ -490,6 +563,158 @@ class QueueScreen extends StatelessWidget {
       controller.dispose();
     });
     return result;
+  }
+
+  Future<void> _showMoveToProjectSheet(
+    BuildContext context,
+    PortaThoughtyState state,
+  ) async {
+    final selectedNoteIds = state.selectedNoteIds.toList();
+    if (selectedNoteIds.isEmpty) return;
+
+    final projects = state.projects;
+    final selectedProjectId = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        margin: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x26000000),
+              blurRadius: 40,
+              offset: Offset(0, 20),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: Icon(
+                        Icons.drive_file_move_outlined,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Move ${selectedNoteIds.length} note${selectedNoteIds.length == 1 ? '' : 's'} to project',
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleLarge
+                            ?.copyWith(fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                ...projects.map(
+                  (project) => Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .surfaceContainerHighest
+                          .withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(16),
+                      onTap: () => Navigator.of(context).pop(project.id),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              backgroundColor:
+                                  project.color.withValues(alpha: 0.2),
+                              foregroundColor: project.color,
+                              child: Icon(project.icon ?? Icons.folder),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Text(
+                                project.name,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyLarge
+                                    ?.copyWith(fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                            Icon(
+                              Icons.chevron_right,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(52),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      side: BorderSide(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .outline
+                            .withValues(alpha: 0.5),
+                      ),
+                    ),
+                    child: const Text(
+                      'Cancel',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    if (selectedProjectId != null && context.mounted) {
+      HapticFeedback.lightImpact();
+      final success = await state.moveNotesToProject(selectedNoteIds, selectedProjectId);
+      if (success && context.mounted) {
+        final projectName = state.projects
+            .firstWhere((p) => p.id == selectedProjectId, orElse: () => state.activeProject)
+            .name;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${selectedNoteIds.length} note${selectedNoteIds.length == 1 ? '' : 's'} moved to $projectName',
+            ),
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _showNoteEditor(

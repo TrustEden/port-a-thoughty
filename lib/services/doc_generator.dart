@@ -74,28 +74,44 @@ class DocGenerator {
       buffer.writeln();
     } catch (e) {
       // Fallback to basic formatting if Groq fails
-      buffer.writeln('## Highlights');
+      if (project.projectType == 'Grocery List') {
+        buffer.writeln('## 🛒 Shopping List');
+        buffer.writeln();
+        buffer.writeln('_Note: AI processing unavailable. Showing items from your notes._');
+        buffer.writeln();
+        buffer.writeln('### 🔧 Items');
+        for (final note in notes) {
+          final lines = _normalizeLines(note.text);
+          for (final line in lines) {
+            buffer.writeln('- [ ] $line');
+          }
+        }
+      } else {
+        buffer.writeln('## Highlights');
+        buffer.writeln();
+        buffer.writeln('_Note: AI processing unavailable. Showing raw notes._');
+        buffer.writeln();
+        buffer.writeln('Error: $e');
+        buffer.writeln();
+
+        for (final note in notes) {
+          _appendNote(buffer, note);
+          buffer.writeln();
+        }
+      }
+    }
+
+    // Add raw notes section for reference (skip for grocery lists since they're already organized)
+    if (project.projectType != 'Grocery List') {
+      buffer.writeln('---');
       buffer.writeln();
-      buffer.writeln('_Note: AI processing unavailable. Showing raw notes._');
-      buffer.writeln();
-      buffer.writeln('Error: $e');
+      buffer.writeln('## Raw Notes (Original Captures)');
       buffer.writeln();
 
       for (final note in notes) {
         _appendNote(buffer, note);
         buffer.writeln();
       }
-    }
-
-    // Add raw notes section for reference
-    buffer.writeln('---');
-    buffer.writeln();
-    buffer.writeln('## Raw Notes (Original Captures)');
-    buffer.writeln();
-
-    for (final note in notes) {
-      _appendNote(buffer, note);
-      buffer.writeln();
     }
 
     buffer.writeln('---');

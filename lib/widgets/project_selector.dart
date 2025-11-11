@@ -289,21 +289,15 @@ class _ProjectManagementSheetState extends State<_ProjectManagementSheet> {
     _selectedProjectId = widget.activeProject.id;
     _nameController = TextEditingController(text: widget.activeProject.name);
     _descriptionController = TextEditingController(
-      text: widget.activeProject.prompt ?? '',
+      text: widget.activeProject.description ?? '',
     );
-    // Try to infer project type from the prompt or default to first type
-    _selectedType = _inferProjectType(widget.activeProject);
+    // Get project type from projectType field, defaulting to 'Inbox' if null
+    _selectedType = widget.activeProject.projectType ?? 'Inbox';
   }
 
   String _inferProjectType(Project project) {
-    final prompt = project.prompt?.toLowerCase() ?? '';
-    if (prompt.contains('grocery')) return 'Grocery List';
-    if (prompt.contains('dev project') || prompt.contains('development')) {
-      return 'Dev Project';
-    }
-    if (prompt.contains('creative writing')) return 'Creative Writing';
-    if (prompt.contains('todo')) return 'General Todo';
-    return _projectTypes.first;
+    // Now we have an explicit projectType field, no need to infer
+    return project.projectType ?? 'Inbox';
   }
 
   @override
@@ -323,7 +317,7 @@ class _ProjectManagementSheetState extends State<_ProjectManagementSheet> {
       _selectedProjectId = projectId;
       final project = _currentProject;
       _nameController.text = project.name;
-      _descriptionController.text = project.prompt ?? '';
+      _descriptionController.text = project.description ?? '';
       _selectedType = _inferProjectType(project);
     });
   }
@@ -427,8 +421,8 @@ class _ProjectManagementSheetState extends State<_ProjectManagementSheet> {
               fillColor: theme.colorScheme.surfaceContainerHighest
                   .withValues(alpha: 0.3),
               prefixIcon: const Icon(Icons.description),
-              hintText: 'Project context and details',
-              helperText: 'Helps you and AI understand this project',
+              hintText: 'E.g., "weekly shopping" or "novel ideas"',
+              helperText: 'Add context about this project (optional)',
             ),
             maxLines: 3,
             maxLength: 400,

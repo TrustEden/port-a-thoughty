@@ -86,7 +86,9 @@ class Project {
     required this.name,
     required this.color,
     this.icon,
-    this.prompt,
+    this.description,
+    this.projectType,
+    this.prompt, // Deprecated: kept for migration only
     this.createdAt,
     this.updatedAt,
   });
@@ -95,6 +97,11 @@ class Project {
   final String name;
   final Color color;
   final IconData? icon;
+  /// User-visible context about this project (e.g., "Weekly grocery shopping")
+  final String? description;
+  /// Project type determines which prompt template to use (e.g., "Dev Project", "Grocery List")
+  final String? projectType;
+  /// @deprecated Kept for backwards compatibility during migration. Use description + projectType instead.
   final String? prompt;
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -104,6 +111,8 @@ class Project {
     String? name,
     Color? color,
     IconData? icon,
+    String? description,
+    String? projectType,
     String? prompt,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -113,6 +122,8 @@ class Project {
       name: name ?? this.name,
       color: color ?? this.color,
       icon: icon ?? this.icon,
+      description: description ?? this.description,
+      projectType: projectType ?? this.projectType,
       prompt: prompt ?? this.prompt,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -128,6 +139,8 @@ class Project {
       name: map['name'] as String,
       color: Color(colorValue),
       icon: _createIconData(iconCodePoint, iconFontFamily),
+      description: map['description'] as String?,
+      projectType: map['project_type'] as String?,
       prompt: map['prompt'] as String?,
       createdAt: _dateFromMillis(map['created_at'] as int?),
       updatedAt: _dateFromMillis(map['updated_at'] as int?),
@@ -141,6 +154,8 @@ class Project {
       'color': _encodeColor(color),
       'icon_code_point': icon?.codePoint,
       'icon_font_family': icon?.fontFamily,
+      'description': description,
+      'project_type': projectType,
       'prompt': prompt,
       'created_at':
           createdAt?.millisecondsSinceEpoch ??

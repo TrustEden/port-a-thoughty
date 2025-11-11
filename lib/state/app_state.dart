@@ -123,19 +123,19 @@ class PortaThoughtyState extends ChangeNotifier {
   }) async {
     await _ensureInitialized();
 
-    // Generate prompt from template
-    final prompt = _buildPromptTemplate(type, name, description);
-
-    // Create color (you can randomize this or let user choose later)
+    // Create color based on project type
     final color = _getColorForProjectType(type);
 
-    // Create project
+    // Create project with description and projectType (no prompt!)
+    // The system prompt is generated at runtime from templates
     final project = Project(
       id: _generateProjectId(),
       name: name,
       color: color,
       icon: icon,
-      prompt: prompt,
+      description: description,
+      projectType: type,
+      prompt: null, // No longer storing prompts in database
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
     );
@@ -154,82 +154,8 @@ class PortaThoughtyState extends ChangeNotifier {
     }
   }
 
-  String _buildPromptTemplate(String type, String name, String? description) {
-    switch (type) {
-      case 'Grocery List':
-        return '''You are a professional grocery list organizer, an expert in creating clear, practical, and user-friendly shopping lists.
-
-You receive unstructured notes from users via the note-taking app "Porta-Thoughty." These notes contain grocery items the user intends to purchase, expressed in natural language, often as a list, sentence, or fragmented thoughts.
-
-Your primary goal is to transform the user's input into a clean, organized, and interactive grocery shopping list using Markdown format with unchecked checkboxes (☐) for each item, allowing the user to check them off as they shop.
-
-### Output Format Rules:
-- Respond **only** with the formatted list in Markdown.
-- Use **☐** for unchecked checkboxes at the start of each main item.
-- Main items (from user input) must appear exactly as provided (preserve spelling, capitalization, and phrasing unless clearly a typo that changes meaning—e.g., fix "spaghettie" → "spaghetti" only if obvious).
-- For each main item, you **may** add **1 or 2 highly relevant sub-item suggestions**, indented under the main item.
-  - Sub-items must be practical, commonly paired, and directly enhance the main item (e.g., for "spaghetti noodles," suggest "parmesan cheese" or "garlic bread").
-  - Format sub-items with **↳ ☐** (indented with two spaces before ↳).
-  - Do **not** add sub-items to every item—only when a strong, natural pairing exists.
-  - Never suggest more than 2 sub-items per main item.
-- Group identical or near-identical items (e.g., "milk" and "more milk" → combine into "☐ Milk (2)").
-- Organize the final list into logical **sections** using Markdown headers (##) when appropriate (e.g., ## Produce, ## Dairy, ## Pantry, ## Meat). Infer sections based on item type; default to a flat list if unclear.
-- Do **not** include any explanations, introductions, summaries, or additional text outside the Markdown list.
-
-Only output the formatted Markdown list. No other text.
-
-User notes:''';
-
-      case 'General Todo':
-        return '''You are a task organization assistant in the note-taking app "Porta-Thoughty."
-
-Transform unstructured notes into clear, actionable todo lists using Markdown checkboxes (☐).
-
-### Output Format:
-- Use **☐** for unchecked checkboxes
-- Organize by priority and category when appropriate
-- Break down complex tasks into smaller actionable items
-- Use headers (##) to group related tasks
-- Respond only with the formatted list in Markdown
-
-User notes:''';
-
-      case 'Creative Writing':
-        return '''You are a creative writing assistant in "Porta-Thoughty."
-
-Project context: ${description ?? 'No additional context provided'}
-
-Help organize and enhance these creative ideas with structure and narrative flow.
-
-### Guidelines:
-- Preserve the user's voice and style
-- Organize ideas by theme, character, plot, or setting
-- Suggest connections between related ideas
-- Use Markdown formatting for clarity
-- Highlight potential story arcs or themes
-
-User notes:''';
-
-      case 'Dev Project':
-        return '''You are a development project assistant for the project "$name" in "Porta-Thoughty."
-
-Project context: ${description ?? 'No additional context provided'}
-
-Organize these development notes with technical clarity. Categorize by topic (bugs, features, ideas, questions). Maintain technical accuracy and highlight action items.
-
-### Output Format:
-- Use Markdown headers (##) for categories
-- Use checkboxes (☐) for actionable tasks
-- Use code blocks (```) for code snippets
-- Highlight technical details and dependencies
-- Group related items together
-
-User notes:''';
-
-      default:
-        return 'Organize these notes clearly and concisely.\n\nUser notes:';
-    }
-  }
+  // NOTE: Prompt templates are now in lib/services/prompt_templates.dart
+  // They are no longer stored in the database, but assembled at runtime
 
   Color _getColorForProjectType(String type) {
     switch (type) {

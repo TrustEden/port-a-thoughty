@@ -28,7 +28,7 @@ class LocalDatabase {
     final dbPath = p.join(supportDir.path, 'porta_thoughty.db');
     final database = await sqflite.openDatabase(
       dbPath,
-      version: 2,
+      version: 3,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE projects(
@@ -37,6 +37,8 @@ class LocalDatabase {
             color INTEGER NOT NULL,
             icon_code_point INTEGER,
             icon_font_family TEXT,
+            description TEXT,
+            project_type TEXT,
             prompt TEXT,
             created_at INTEGER NOT NULL,
             updated_at INTEGER NOT NULL
@@ -105,6 +107,29 @@ class LocalDatabase {
             );
           }
         }
+
+        if (oldVersion < 3) {
+          // Add description and project_type columns to projects table
+          final result = await db.rawQuery('PRAGMA table_info(projects)');
+          final hasDescription = result.any((col) => col['name'] == 'description');
+          final hasProjectType = result.any((col) => col['name'] == 'project_type');
+
+          if (!hasDescription) {
+            await db.execute(
+              'ALTER TABLE projects ADD COLUMN description TEXT',
+            );
+          }
+
+          if (!hasProjectType) {
+            await db.execute(
+              'ALTER TABLE projects ADD COLUMN project_type TEXT',
+            );
+          }
+
+          // Note: Existing projects will have null description and project_type.
+          // The prompt field contains the old full prompt for backwards compatibility.
+          // The app will handle migrating these on-the-fly when needed.
+        }
       },
     );
     _db = database;
@@ -130,102 +155,9 @@ class LocalDatabase {
       name: 'Inbox',
       color: const Color(0xFF4A53FF),
       icon: Icons.inbox_outlined,
-      prompt: '''You are an AI assistant helping with the Porta-Thoughty Flutter application.
-
-## Project Overview
-Porta-Thoughty is a Flutter app for capturing and organizing thoughts via voice, text, and image. It uses a queue-based workflow: capture notes → select from queue → process with AI → save as Markdown docs.
-
-## Architecture
-- **State Management**: Provider-based with PortaThoughtyState in lib/state/app_state.dart
-- **Database**: SQLite (sqflite) via LocalDatabase in lib/services/local_database.dart
-- **AI Processing**: Groq API via GroqService in lib/services/groq_service.dart
-- **Voice Capture**: Native speech-to-text via NativeSpeechToTextService in lib/services/native_speech_to_text.dart
-- **OCR**: Google ML Kit via OcrService in lib/services/ocr_service.dart
-- **Doc Generation**: Markdown files via DocGenerator in lib/services/doc_generator.dart
-
-## Key Models (lib/models/)
-- **Note**: id, projectId, type (voice/text/image), text, imageLabel, imagePath, includeImage, flaggedLowConfidence, isProcessed, createdAt
-- **Project**: id, name, color, icon, prompt (AI instructions), createdAt, updatedAt
-- **ProcessedDoc**: id, projectId, title, markdownPath, summary (bullet points), sourceNoteIds, createdAt
-
-## UI Structure
-### Three Main Screens (bottom navigation, IndexedStack in main.dart)
-1. **CaptureScreen** (lib/screens/capture_screen.dart):
-   - ProjectSelector widget at top
-   - Voice capture card with mic button (assets/mic.png when idle, assets/stoprecording.png when recording)
-   - Quick action buttons: "Add text note", "Take photo", "Upload files", "New project"
-   - RecentNoteList widget showing last 5 notes with three-dot menu (move/delete options)
-
-2. **QueueScreen** (lib/screens/queue_screen.dart):
-   - "Processing queue" title with "Clear selection" button
-   - Chip showing selected count
-   - Note cards (_QueueNoteCard) with:
-     * Checkbox for selection
-     * Icon container (colored background, 16px border radius)
-     * Preview text (titleMedium, w700)
-     * Delete button: IconButton with trashicon.png asset (20x20, colored onSurfaceVariant) - line 456-467
-     * Meta chips: timestamp, note-specific info, "Ready for AI processing" badge
-   - Bottom process button: FilledButton.icon with Icons.auto_mode, 58px height, 22px border radius
-
-3. **DocsScreen** (lib/screens/docs_screen.dart):
-   - "Docs & summaries" title with "Token safety" button
-   - Doc cards (_DocCard) with:
-     * assets/docs.png icon (60x60)
-     * Title and metadata
-     * First 3 bullet points from summary
-     * Three buttons: Preview (OutlinedButton), Share (OutlinedButton), Delete (OutlinedButton circular with trashicon.png asset 24x24) - line 587-598
-
-### Common Widget Patterns
-- **Cards/Containers**: BorderRadius.circular(26-28 for large, 16-18 for medium), white backgrounds with .withValues(alpha: 0.9), boxShadow with Color(0x12014F8E)
-- **Buttons**: FilledButton for primary actions (52-58px height, 16-22px border radius), OutlinedButton for secondary
-- **Delete Buttons**:
-  * In QueueScreen note cards: IconButton with trashicon.png (20x20) - lib/screens/queue_screen.dart:456-467
-  * In DocsScreen doc cards: OutlinedButton.icon with circular shape, trashicon.png (24x24) - lib/screens/docs_screen.dart:587-598
-  * In RecentNoteList popup menu: PopupMenuItem with trashicon.png (24x24) - lib/widgets/recent_note_list.dart:325-338
-- **Meta Chips**: 12px horizontal, 6px vertical padding, 14px border radius, Icons 16px
-- **Accent Colors**: Voice notes = primary blue, Text notes = Color(0xFFFB8C00) orange, Image notes = Color(0xFF8E24AA) purple
-
-### Key Widgets (lib/widgets/)
-- **ProjectSelector** (project_selector.dart): Dropdown chip showing active project with edit/switch functionality
-- **RecentNoteList** (recent_note_list.dart): Displays notes with _NoteAvatar, meta chips, and _NoteOptionsMenu (move/delete)
-- **AppBottomSheet** (bottom_sheets.dart): Reusable confirmation dialogs
-
-## Common State Methods (PortaThoughtyState)
-- addTextNote(String text)
-- addImageNote({ocrText, includeImage, imagePath, label})
-- startRecording() / stopRecording()
-- processSelectedNotes({customTitle})
-- deleteNote(Note note) / undoNoteDeletion()
-- toggleNoteSelection(String noteId) / clearSelection()
-- switchProject(String projectId)
-
-## Database Schema
-- **projects**: id, name, color, icon_code_point, icon_font_family, prompt, created_at, updated_at
-- **notes**: id, project_id, type, text, image_label, image_path, include_image, created_at, flagged_low_confidence, is_processed, deleted_at
-- **docs**: id, project_id, title, markdown_path, summary, source_note_ids, prompt_hash, created_at
-- **settings**: key-value store
-
-## File Paths
-- Database: getApplicationSupportDirectory()/porta_thoughty.db
-- Markdown docs: getApplicationSupportDirectory()/docs/<project_name>/<title>.md
-- Images: Stored at path from ImagePicker (kept for notes with includeImage=true)
-
-## Common Styling Values
-- Primary color: Color(0xFF4A53FF) blue
-- Container padding: 18-26px
-- Large shadows: blurRadius 24-34, offset Y 14-20
-- Font weights: w600 for medium emphasis, w700 for strong emphasis
-- Border radius: 14px chips, 16-18px buttons, 26-28px cards
-
-When helping with features:
-1. Check which screen/widget is affected
-2. Match existing styling patterns (border radius, shadows, colors, fonts)
-3. Use Provider pattern: context.read<PortaThoughtyState>() for actions, context.watch for reactive UI
-4. For delete buttons, use trashicon.png asset (see examples in queue_screen.dart:456-467, docs_screen.dart:587-598, recent_note_list.dart:325-338)
-5. All user-facing strings should be clear and friendly (see existing copy)
-6. Database changes require migration logic in LocalDatabase.init()
-
-Organize these notes clearly and concisely for development reference.''',
+      description: null,
+      projectType: 'Inbox',
+      prompt: null, // System prompts are now stored in code, not in database
       createdAt: now,
       updatedAt: now,
     );

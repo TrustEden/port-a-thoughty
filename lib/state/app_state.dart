@@ -378,8 +378,34 @@ class PortaThoughtyState extends ChangeNotifier {
     return true;
   }
 
+  Future<bool> moveNotesToProject(List<String> noteIds, String newProjectId) async {
+    await _ensureInitialized();
+
+    for (final noteId in noteIds) {
+      final note = _notes.firstWhere(
+        (element) => element.id == noteId,
+        orElse: () => throw Exception('Note not found'),
+      );
+
+      final updatedNote = note.copyWith(projectId: newProjectId);
+      await _database.updateNote(updatedNote);
+    }
+
+    // If moving to different project, remove from current view
+    if (newProjectId != _activeProjectId) {
+      _notes = _notes.where((element) => !noteIds.contains(element.id)).toList();
+      for (final noteId in noteIds) {
+        _selectedNoteIds.remove(noteId);
+      }
+    }
+
+    notifyListeners();
+    return true;
+  }
+
   Future<({bool success, String? error})> processSelectedNotes({
     String? customTitle,
+    String? targetProjectId,
   }) async {
     await _ensureInitialized();
     if (_selectedNoteIds.isEmpty) {
@@ -393,19 +419,34 @@ class PortaThoughtyState extends ChangeNotifier {
       return (success: false, error: 'Selected notes are no longer available.');
     }
 
+    // Use target project if specified, otherwise use active project
+    final projectId = targetProjectId ?? _activeProjectId;
+    final project = _projects.firstWhere(
+      (p) => p.id == projectId,
+      orElse: () => activeProject,
+    );
+
     final title = (customTitle?.trim().isNotEmpty ?? false)
         ? customTitle!.trim()
         : _generateDocTitle(selectedNotes);
 
     try {
+      // Move notes to target project if different from current
+      if (projectId != _activeProjectId) {
+        for (final note in selectedNotes) {
+          final updatedNote = note.copyWith(projectId: projectId);
+          await _database.updateNote(updatedNote);
+        }
+      }
+
       final markdownPath = await _docGenerator.saveMarkdown(
-        project: activeProject,
+        project: project,
         title: title,
         notes: selectedNotes,
         groqApiKey: _settings.groqApiKey,
       );
       final doc = ProcessedDoc(
-        projectId: _activeProjectId,
+        projectId: projectId,
         title: title,
         createdAt: DateTime.now(),
         summary: selectedNotes.map(_summarizeNote).toList(growable: false),
@@ -419,10 +460,16 @@ class PortaThoughtyState extends ChangeNotifier {
       _notes = await _database.fetchActiveNotes(_activeProjectId);
       _docs = await _database.fetchDocs(_activeProjectId);
       _selectedNoteIds.clear();
-      _lastProcessedDoc = _docs.firstWhere(
-        (entry) => entry.id == doc.id,
-        orElse: () => doc,
-      );
+
+      // Only set lastProcessedDoc if processed to current project
+      if (projectId == _activeProjectId) {
+        _lastProcessedDoc = _docs.firstWhere(
+          (entry) => entry.id == doc.id,
+          orElse: () => doc,
+        );
+      } else {
+        _lastProcessedDoc = null;
+      }
 
       // Wait for microtask queue to clear before notifying
       await Future.microtask(() {});

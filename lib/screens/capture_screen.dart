@@ -679,7 +679,6 @@ class _QuickActionsRow extends StatelessWidget {
     );
 
     if (!context.mounted) return;
-    final ocrSupported = !kIsWeb && (Platform.isAndroid || Platform.isIOS);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(

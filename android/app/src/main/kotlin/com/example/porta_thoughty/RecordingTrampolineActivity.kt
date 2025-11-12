@@ -4,6 +4,8 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 
 /**
@@ -42,11 +44,18 @@ class RecordingTrampolineActivity : Activity() {
                 Log.d("RecordingTrampoline", "Starting service")
                 startService(serviceIntent)
             }
+
+            // Delay finishing to give service time to call startForeground()
+            // This is critical for Android 14+ - the activity must be "visible"
+            // when startForeground() is called
+            Handler(Looper.getMainLooper()).postDelayed({
+                Log.d("RecordingTrampoline", "Finishing activity after delay")
+                finish()
+            }, 300) // 300ms delay
+
         } catch (e: Exception) {
             Log.e("RecordingTrampoline", "Failed to start service", e)
+            finish()
         }
-
-        // Immediately finish the activity so it doesn't show
-        finish()
     }
 }

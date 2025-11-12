@@ -16,27 +16,16 @@ import '../services/local_database.dart';
 import '../services/native_speech_to_text.dart';
 
 class PortaThoughtyState extends ChangeNotifier {
-  static const platform = MethodChannel('com.example.porta_thoughty/widget');
-
   PortaThoughtyState() {
     _speechService = NativeSpeechToTextService(
       onResult: _handleSpeechResult,
       onListeningChanged: (isListening) {
         _isRecording = isListening;
         notifyListeners();
-        _sendWidgetUpdate(isListening);
       },
     );
     _docGenerator = DocGenerator();
     _initialization = _bootstrap();
-  }
-
-  Future<void> _sendWidgetUpdate(bool isRecording) async {
-    try {
-      await platform.invokeMethod('updateWidget', {'isRecording': isRecording});
-    } on PlatformException catch (e) {
-      print("Failed to update widget: '${e.message}'.");
-    }
   }
 
   final LocalDatabase _database = LocalDatabase();

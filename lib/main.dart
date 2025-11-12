@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter/services.dart'; // Import for MethodChannel
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 
@@ -49,7 +48,6 @@ class HomeShell extends StatefulWidget {
 class _HomeShellState extends State<HomeShell> {
   int _index = 0;
   late PageController _pageController;
-  static const platform = MethodChannel('com.example.porta_thoughty/widget'); // Define MethodChannel
   StreamSubscription? _intentMediaStreamSubscription;
   bool _hasCheckedIntro = false;
 
@@ -75,7 +73,6 @@ class _HomeShellState extends State<HomeShell> {
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: _index);
-    _setupMethodChannel(); // Setup MethodChannel listener
     _initSharingListener(); // Setup share intent listeners
     _checkAndShowIntro(); // Check if we need to show intro
   }
@@ -94,43 +91,6 @@ class _HomeShellState extends State<HomeShell> {
             fullscreenDialog: true,
           ),
         );
-      }
-    });
-  }
-
-  void _setupMethodChannel() {
-    platform.setMethodCallHandler((call) async {
-      print('MethodChannel call received: ${call.method}');
-      if (call.method == "handleWidgetClick") {
-        final String? uriString = call.arguments as String?;
-        print('Received URI string: $uriString');
-        if (uriString != null) {
-          final Uri uri = Uri.parse(uriString);
-          print('Parsed URI: $uri');
-          if (uri.host == 'home_widget' && uri.pathSegments.contains('record')) {
-            print('URI matches recording intent. Navigating to CaptureScreen.');
-            _onDestinationSelected(0); // Navigate to CaptureScreen (now index 0)
-            Future.delayed(const Duration(milliseconds: 350), () {
-              if (mounted) {
-                print('Delayed execution: context mounted.');
-                final state = Provider.of<PortaThoughtyState>(context, listen: false);
-                print('PortaThoughtyState instance obtained. isRecording: ${state.isRecording}');
-                if (!state.isRecording) {
-                  print('Calling startRecording().');
-                  state.startRecording();
-                } else {
-                  print('Already recording, not calling startRecording().');
-                }
-              } else {
-                print('Delayed execution: context not mounted.');
-              }
-            });
-          } else {
-            print('URI does not match recording intent.');
-          }
-        } else {
-          print('URI string is null.');
-        }
       }
     });
   }

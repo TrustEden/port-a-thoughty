@@ -10,6 +10,8 @@ import android.net.Uri
 import android.widget.RemoteViews
 import com.example.porta_thoughty.MainActivity
 import android.content.ComponentName
+import com.example.porta_thoughty.WidgetClickReceiver
+import android.util.Log
 
 class RecordWidgetProvider : AppWidgetProvider() {
 
@@ -36,6 +38,7 @@ class RecordWidgetProvider : AppWidgetProvider() {
     }
 
     private fun updateWidget(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int, isRecording: Boolean) {
+        Log.d("RecordWidgetProvider", "updateWidget: isRecording=$isRecording")
         val views = RemoteViews(context.packageName, R.layout.record_widget)
 
         // Set the appropriate icon based on recording state
@@ -45,19 +48,16 @@ class RecordWidgetProvider : AppWidgetProvider() {
             views.setImageViewResource(R.id.record_button, R.drawable.capture)
         }
 
-        // Set up click handler to start/stop background recording service
-        val serviceIntent = Intent(context, com.example.porta_thoughty.BackgroundRecordingService::class.java).apply {
-            action = if (isRecording) {
-                com.example.porta_thoughty.BackgroundRecordingService.ACTION_STOP_RECORDING
-            } else {
-                com.example.porta_thoughty.BackgroundRecordingService.ACTION_START_RECORDING
-            }
+        // Set up click handler to trigger BroadcastReceiver
+        val clickIntent = Intent(context, WidgetClickReceiver::class.java).apply {
+            action = WidgetClickReceiver.ACTION_WIDGET_CLICK
+            putExtra(WidgetClickReceiver.EXTRA_IS_RECORDING, isRecording)
         }
 
-        val pendingIntent = PendingIntent.getService(
+        val pendingIntent = PendingIntent.getBroadcast(
             context,
             0,
-            serviceIntent,
+            clickIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         views.setOnClickPendingIntent(R.id.record_button, pendingIntent)

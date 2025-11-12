@@ -73,10 +73,12 @@ class BackgroundRecordingService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        android.util.Log.d("BackgroundRecordingService", "onCreate()")
         createNotificationChannel()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        android.util.Log.d("BackgroundRecordingService", "onStartCommand: action=${intent?.action}")
         when (intent?.action) {
             ACTION_START_RECORDING -> startRecording()
             ACTION_STOP_RECORDING -> stopRecording()
@@ -132,15 +134,27 @@ class BackgroundRecordingService : Service() {
     }
 
     private fun startRecording() {
+        android.util.Log.d("BackgroundRecordingService", "startRecording() called, isRecording=$isRecording")
+
         if (isRecording) {
-            println("Already recording, ignoring start request")
+            android.util.Log.w("BackgroundRecordingService", "Already recording, ignoring start request")
             return
         }
 
+        // Check if speech recognition is available
+        if (!SpeechRecognizer.isRecognitionAvailable(this)) {
+            android.util.Log.e("BackgroundRecordingService", "Speech recognition not available on this device")
+            savePendingNote(this, "[Error: Speech recognition not available on this device]", "inbox")
+            stopSelf()
+            return
+        }
+
+        android.util.Log.d("BackgroundRecordingService", "Starting foreground service with notification")
         isRecording = true
         startForeground(NOTIFICATION_ID, createNotification(true))
         updateWidget(true)
 
+        android.util.Log.d("BackgroundRecordingService", "Creating SpeechRecognizer")
         speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this).apply {
             setRecognitionListener(object : RecognitionListener {
                 override fun onReadyForSpeech(params: Bundle?) {
@@ -212,11 +226,20 @@ class BackgroundRecordingService : Service() {
                 putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 8000L)
             }
 
-            startListening(intent)
+            android.util.Log.d("BackgroundRecordingService", "Starting speech recognition listener")
+            try {
+                startListening(intent)
+                android.util.Log.d("BackgroundRecordingService", "Speech recognition started successfully")
+            } catch (e: Exception) {
+                android.util.Log.e("BackgroundRecordingService", "Failed to start listening", e)
+                savePendingNote(this@BackgroundRecordingService, "[Error: Failed to start recording - ${e.message}]", "inbox")
+                stopRecording()
+            }
         }
     }
 
     private fun stopRecording() {
+        android.util.Log.d("BackgroundRecordingService", "stopRecording() called, isRecording=$isRecording")
         if (!isRecording) return
 
         isRecording = false
@@ -227,6 +250,7 @@ class BackgroundRecordingService : Service() {
         updateWidget(false)
         stopForeground(true)
         stopSelf()
+        android.util.Log.d("BackgroundRecordingService", "Service stopped")
     }
 
     private fun updateWidget(isRecording: Boolean) {

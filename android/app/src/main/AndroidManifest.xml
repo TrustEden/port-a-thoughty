@@ -66,6 +66,12 @@
                 android:resource="@xml/record_widget_info" />
         </receiver>
 
+        <receiver android:name=".WidgetClickReceiver" android:exported="false">
+            <intent-filter>
+                <action android:name="com.example.porta_thoughty.WIDGET_CLICK" />
+            </intent-filter>
+        </receiver>
+
         <service
             android:name=".BackgroundRecordingService"
             android:enabled="true"

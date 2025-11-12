@@ -9,21 +9,17 @@ import android.util.Log
 class WidgetClickReceiver : BroadcastReceiver() {
     companion object {
         const val ACTION_WIDGET_CLICK = "com.example.porta_thoughty.WIDGET_CLICK"
-        const val EXTRA_IS_RECORDING = "isRecording"
     }
 
     override fun onReceive(context: Context, intent: Intent) {
         Log.d("WidgetClickReceiver", "onReceive: ${intent.action}")
 
         if (intent.action == ACTION_WIDGET_CLICK) {
-            val isRecording = intent.getBooleanExtra(EXTRA_IS_RECORDING, false)
-
-            // Start the trampoline activity which will start the service
-            // This is necessary for Android 14+ FGS restrictions
+            // Start the recording activity which handles speech recognition
+            // This is necessary for Android 15 "while-in-use" microphone requirements
             val activityIntent = Intent(context, RecordingTrampolineActivity::class.java).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
-                putExtra(RecordingTrampolineActivity.EXTRA_IS_RECORDING, isRecording)
             }
 
             try {

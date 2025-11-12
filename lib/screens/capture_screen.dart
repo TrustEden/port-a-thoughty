@@ -47,14 +47,6 @@ class CaptureScreen extends StatelessWidget {
           _SpeechCaptureCard(state: state),
           const SizedBox(height: 16),
           _QuickActionsRow(state: state),
-          const SizedBox(height: 28),
-          _SectionTitle(
-            title: 'Recent captures',
-            subtitle:
-                'Fresh notes drop in here. Process them later from the Queue tab.',
-          ),
-          const SizedBox(height: 12),
-          RecentNoteList(notes: state.queue.take(5).toList()),
         ],
       ),
     );
@@ -89,7 +81,7 @@ class _SpeechCaptureCard extends StatelessWidget {
           ),
         ],
       ),
-      padding: const EdgeInsets.fromLTRB(26, 28, 26, 32),
+      padding: const EdgeInsets.fromLTRB(26, 22, 26, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -117,7 +109,7 @@ class _SpeechCaptureCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           Text(
             state.settings.pressAndHoldToRecord
                 ? (isRecording
@@ -132,7 +124,7 @@ class _SpeechCaptureCard extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 28),
+          const SizedBox(height: 20),
           Center(
             child: state.settings.pressAndHoldToRecord
                 ? _RecordingButton(
@@ -163,7 +155,7 @@ class _SpeechCaptureCard extends StatelessWidget {
                     },
                   ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
         ],
       ),
     );
@@ -204,8 +196,8 @@ class _RecordingButton extends StatelessWidget {
         child: AnimatedContainer(
           duration: disableAnimations ? Duration.zero : const Duration(milliseconds: 250),
           curve: Curves.easeOutCubic,
-          height: 140,
-          width: 140,
+          height: 120,
+          width: 120,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             gradient: RadialGradient(
@@ -227,8 +219,8 @@ class _RecordingButton extends StatelessWidget {
             child: AnimatedContainer(
               duration: disableAnimations ? Duration.zero : const Duration(milliseconds: 200),
               curve: Curves.easeOutBack,
-              height: isRecording ? 72 : 86,
-              width: isRecording ? 72 : 86,
+              height: isRecording ? 60 : 72,
+              width: isRecording ? 60 : 72,
               child: AnimatedSwitcher(
                 duration: disableAnimations ? Duration.zero : const Duration(milliseconds: 250),
                 transitionBuilder: (child, animation) {
@@ -244,15 +236,15 @@ class _RecordingButton extends StatelessWidget {
                     ? Image.asset(
                         key: const ValueKey('stop'),
                         'assets/stoprecording.png',
-                        width: 136,
-                        height: 136,
+                        width: 120,
+                        height: 120,
                         gaplessPlayback: true,
                       )
                     : Image.asset(
                         key: const ValueKey('mic'),
                         'assets/mic.png',
-                        width: 136,
-                        height: 136,
+                        width: 120,
+                        height: 120,
                         gaplessPlayback: true,
                       ),
               ),
@@ -278,7 +270,7 @@ class _QuickActionsRow extends StatelessWidget {
             Expanded(
               child: _QuickActionButton(
                 imageAsset: 'assets/written.png',
-                label: 'Add text note',
+                label: 'Text note',
                 onTap: () => _openTextNoteComposer(context),
                 width: 31,
                 height: 31,
@@ -943,13 +935,14 @@ class _ProjectCreationSheetState extends State<ProjectCreationSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-        left: 20,
-        right: 20,
-        top: 24,
-      ),
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+          left: 20,
+          right: 20,
+          top: 24,
+        ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1055,6 +1048,7 @@ class _ProjectCreationSheetState extends State<ProjectCreationSheet> {
             ],
           ),
         ],
+      ),
       ),
     );
   }

@@ -13,7 +13,6 @@ import '../state/app_state.dart';
 import '../widgets/app_header.dart';
 import '../widgets/pressable_widget.dart';
 import '../widgets/project_selector.dart';
-import '../widgets/recent_note_list.dart';
 
 class CaptureScreen extends StatelessWidget {
   const CaptureScreen({super.key});
@@ -47,14 +46,6 @@ class CaptureScreen extends StatelessWidget {
           _SpeechCaptureCard(state: state),
           const SizedBox(height: 16),
           _QuickActionsRow(state: state),
-          const SizedBox(height: 28),
-          _SectionTitle(
-            title: 'Recent captures',
-            subtitle:
-                'Fresh notes drop in here. Process them later from the Queue tab.',
-          ),
-          const SizedBox(height: 12),
-          RecentNoteList(notes: state.queue.take(5).toList()),
         ],
       ),
     );
@@ -89,7 +80,7 @@ class _SpeechCaptureCard extends StatelessWidget {
           ),
         ],
       ),
-      padding: const EdgeInsets.fromLTRB(26, 28, 26, 32),
+      padding: const EdgeInsets.fromLTRB(26, 28, 26, 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -103,7 +94,7 @@ class _SpeechCaptureCard extends StatelessWidget {
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     Text(
-                      'Voice capture',
+                      'Voice Capture',
                       style: theme.textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
@@ -163,7 +154,7 @@ class _SpeechCaptureCard extends StatelessWidget {
                     },
                   ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 12),
         ],
       ),
     );
@@ -276,7 +267,7 @@ class _QuickActionsRow extends StatelessWidget {
         Expanded(
           child: _QuickActionButton(
             imageAsset: 'assets/written.png',
-            label: 'Add text note',
+            label: 'Text Note',
             onTap: () => _openTextNoteComposer(context),
             width: 31,
             height: 31,
@@ -286,7 +277,7 @@ class _QuickActionsRow extends StatelessWidget {
         Expanded(
           child: _QuickActionButton(
             imageAsset: 'assets/camera.png',
-            label: 'Take photo',
+            label: 'Take Photo',
             onTap: () => _showOcrMock(context),
             width: 36,
             height: 36,
@@ -296,7 +287,7 @@ class _QuickActionsRow extends StatelessWidget {
         Expanded(
           child: _QuickActionButton(
             imageAsset: 'assets/upload.png',
-            label: 'Upload files',
+            label: 'Upload Files',
             onTap: () => _showMultiImportMock(context),
             width: 36,
             height: 36,

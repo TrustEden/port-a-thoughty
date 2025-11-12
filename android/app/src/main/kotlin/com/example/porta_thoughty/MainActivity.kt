@@ -19,12 +19,13 @@ class MainActivity : FlutterActivity() {
         // Widget channel
         methodChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
         methodChannel.setMethodCallHandler { call, result ->
-            if (call.method == "updateWidget") {
-                val isRecording = call.argument<Boolean>("isRecording") ?: false
-                updateRecordWidget(this, isRecording)
-                result.success(null)
-            } else {
-                result.notImplemented()
+            when (call.method) {
+                "updateWidget" -> {
+                    val isRecording = call.argument<Boolean>("isRecording") ?: false
+                    updateRecordWidget(this, isRecording)
+                    result.success(null)
+                }
+                else -> result.notImplemented()
             }
         }
 
@@ -36,9 +37,19 @@ class MainActivity : FlutterActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        // Handle subsequent intents that re-launch the activity
+        setIntent(intent)
+
+        // Handle widget click to start recording
         if (intent.data != null) {
             methodChannel.invokeMethod("handleWidgetClick", intent.data.toString())
+        }
+
+        // Handle transcription save from widget recording service
+        if (intent.action == "com.example.porta_thoughty.SAVE_TRANSCRIPTION") {
+            val transcription = intent.getStringExtra("transcription")
+            if (transcription != null) {
+                methodChannel.invokeMethod("saveWidgetTranscription", transcription)
+            }
         }
     }
 

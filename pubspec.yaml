@@ -46,6 +46,7 @@ dependencies:
   flutter_dotenv: ^6.0.0
   http: ^1.2.0
   home_widget: ^0.8.1
+  shared_preferences: ^2.3.3
   google_fonts: ^6.2.1
   google_mlkit_text_recognition: ^0.15.0
   image_picker: ^1.1.2

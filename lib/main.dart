@@ -129,6 +129,15 @@ class _HomeShellState extends State<HomeShell> {
         } else {
           print('URI string is null.');
         }
+      } else if (call.method == "saveWidgetTranscription") {
+        // Handle transcription from widget recording
+        final String? transcription = call.arguments as String?;
+        print('Received widget transcription: $transcription');
+        if (transcription != null && mounted) {
+          final state = Provider.of<PortaThoughtyState>(context, listen: false);
+          await state.saveWidgetTranscription(transcription);
+          print('Widget transcription saved to queue.');
+        }
       }
     });
   }

@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 
 import '../models/note.dart';
@@ -610,9 +611,69 @@ class PortaThoughtyState extends ChangeNotifier {
     _settings = settings;
     _projects = projects;
     _activeProjectId = defaultProject.id;
+
+    // Sync widget recordings before loading notes
+    await syncWidgetRecordings();
+
     _notes = await _database.fetchActiveNotes(_activeProjectId);
     _docs = await _database.fetchDocs(_activeProjectId);
     _ready = true;
+    notifyListeners();
+  }
+
+  /// Sync recordings from widget that were made while app was closed
+  Future<void> syncWidgetRecordings() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final keys = prefs.getKeys().where((k) => k.startsWith('pending_transcription_'));
+
+      for (final key in keys) {
+        final text = prefs.getString(key);
+        if (text != null && text.isNotEmpty) {
+          // Extract timestamp from key: pending_transcription_1234567890
+          final timestamp = key.replaceFirst('pending_transcription_', '');
+
+          // Save the note to database
+          final note = Note(
+            projectId: _activeProjectId, // Default to active project
+            type: NoteType.voice,
+            text: text,
+            createdAt: DateTime.now(),
+          );
+
+          await _database.insertNote(note);
+
+          // Remove from SharedPreferences after syncing
+          await prefs.remove(key);
+          await prefs.remove('pending_timestamp');
+
+          print('Synced widget recording: ${text.substring(0, text.length > 50 ? 50 : text.length)}...');
+        }
+      }
+    } catch (e) {
+      print('Error syncing widget recordings: $e');
+    }
+  }
+
+  /// Save a transcription from widget (called when app is running)
+  Future<void> saveWidgetTranscription(String text) async {
+    await _ensureInitialized();
+
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) {
+      return;
+    }
+
+    final note = Note(
+      projectId: _activeProjectId,
+      type: NoteType.voice,
+      text: trimmed,
+      createdAt: DateTime.now(),
+    );
+
+    await _database.insertNote(note);
+    _notes = [note, ..._notes];
+    _pendingRecordingMessage = 'Widget recording added to your queue.';
     notifyListeners();
   }
 

@@ -45,13 +45,19 @@ class RecordWidgetProvider : AppWidgetProvider() {
             views.setImageViewResource(R.id.record_button, R.drawable.capture)
         }
 
-        // Set up click handler to open app and start recording
-        val pendingIntent = PendingIntent.getActivity(
+        // Set up click handler to start/stop recording service (no app opening)
+        val serviceIntent = Intent(context, RecordingForegroundService::class.java).apply {
+            action = if (isRecording) {
+                RecordingForegroundService.ACTION_STOP_RECORDING
+            } else {
+                RecordingForegroundService.ACTION_START_RECORDING
+            }
+        }
+
+        val pendingIntent = PendingIntent.getService(
             context,
             0,
-            Intent(context, MainActivity::class.java).apply {
-                data = Uri.parse("homeWidgetExample://home_widget/record")
-            },
+            serviceIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         views.setOnClickPendingIntent(R.id.record_button, pendingIntent)

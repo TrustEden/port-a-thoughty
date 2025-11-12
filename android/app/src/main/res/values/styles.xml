@@ -19,10 +19,4 @@
     <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
         <item name="android:windowBackground">?android:colorBackground</item>
     </style>
-    <!-- Theme for trampoline activity - must be FULLY visible for microphone service -->
-    <style name="TrampolineTheme" parent="@android:style/Theme.DeviceDefault.Light.NoActionBar">
-        <item name="android:windowBackground">@android:color/white</item>
-        <item name="android:windowIsFloating">false</item>
-        <item name="android:windowAnimationStyle">@android:style/Animation</item>
-    </style>
 </resources>

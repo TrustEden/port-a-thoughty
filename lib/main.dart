@@ -10,6 +10,7 @@ import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart
 import 'screens/capture_screen.dart';
 import 'screens/docs_screen.dart';
 import 'screens/intro_screen.dart';
+import 'screens/onboarding_screen.dart';
 import 'screens/queue_screen.dart';
 import 'state/app_state.dart';
 import 'theme/app_theme.dart';
@@ -84,14 +85,24 @@ class _HomeShellState extends State<HomeShell> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || _hasCheckedIntro) return;
       final state = Provider.of<PortaThoughtyState>(context, listen: false);
-      if (state.isReady && !state.settings.hasSeenIntro) {
+      if (state.isReady) {
         _hasCheckedIntro = true;
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => const IntroScreen(),
-            fullscreenDialog: true,
-          ),
-        );
+        // If no projects exist, show onboarding instead of intro
+        if (state.projects.isEmpty) {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const OnboardingScreen(),
+              fullscreenDialog: true,
+            ),
+          );
+        } else if (!state.settings.hasSeenIntro) {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const IntroScreen(),
+              fullscreenDialog: true,
+            ),
+          );
+        }
       }
     });
   }
@@ -273,17 +284,27 @@ class _HomeShellState extends State<HomeShell> {
   Widget build(BuildContext context) {
     final appState = context.watch<PortaThoughtyState>();
 
-    // Check for intro when state becomes ready
-    if (!_hasCheckedIntro && appState.isReady && !appState.settings.hasSeenIntro) {
+    // Check for intro or onboarding when state becomes ready
+    if (!_hasCheckedIntro && appState.isReady) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && !_hasCheckedIntro) {
           _hasCheckedIntro = true;
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => const IntroScreen(),
-              fullscreenDialog: true,
-            ),
-          );
+          // If no projects exist, show onboarding instead of intro
+          if (appState.projects.isEmpty) {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => const OnboardingScreen(),
+                fullscreenDialog: true,
+              ),
+            );
+          } else if (!appState.settings.hasSeenIntro) {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => const IntroScreen(),
+                fullscreenDialog: true,
+              ),
+            );
+          }
         }
       });
     }

@@ -36,7 +36,7 @@ class CaptureScreen extends StatelessWidget {
       });
     }
 
-    return SingleChildScrollView(
+    return Padding(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 140),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -834,6 +834,7 @@ class _ProjectCreationSheetState extends State<ProjectCreationSheet> {
   bool _isCreating = false;
 
   final List<String> _projectTypes = [
+    'Inbox',
     'Grocery List',
     'Dev Project',
     'Creative Writing',
@@ -841,6 +842,7 @@ class _ProjectCreationSheetState extends State<ProjectCreationSheet> {
   ];
 
   final Map<String, IconData> _typeIcons = {
+    'Inbox': Icons.inbox_outlined,
     'Grocery List': Icons.shopping_cart,
     'Dev Project': Icons.code,
     'Creative Writing': Icons.edit,

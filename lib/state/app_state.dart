@@ -609,9 +609,18 @@ class PortaThoughtyState extends ChangeNotifier {
     final settings = await _database.loadSettings();
     _settings = settings;
     _projects = projects;
-    _activeProjectId = defaultProject.id;
-    _notes = await _database.fetchActiveNotes(_activeProjectId);
-    _docs = await _database.fetchDocs(_activeProjectId);
+
+    // Only load notes and docs if there's at least one project
+    if (defaultProject != null) {
+      _activeProjectId = defaultProject.id;
+      _notes = await _database.fetchActiveNotes(_activeProjectId);
+      _docs = await _database.fetchDocs(_activeProjectId);
+    } else {
+      _activeProjectId = '';
+      _notes = [];
+      _docs = [];
+    }
+
     _ready = true;
     notifyListeners();
   }

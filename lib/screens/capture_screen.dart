@@ -37,7 +37,8 @@ class CaptureScreen extends StatelessWidget {
     }
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 140),
+      physics: const ClampingScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -46,6 +47,7 @@ class CaptureScreen extends StatelessWidget {
           _SpeechCaptureCard(state: state),
           const SizedBox(height: 16),
           _QuickActionsRow(state: state),
+          const SizedBox(height: 120), // Extra space for bottom nav
         ],
       ),
     );
@@ -834,6 +836,7 @@ class _ProjectCreationSheetState extends State<ProjectCreationSheet> {
   bool _isCreating = false;
 
   final List<String> _projectTypes = [
+    'Inbox',
     'Grocery List',
     'Dev Project',
     'Creative Writing',
@@ -841,6 +844,7 @@ class _ProjectCreationSheetState extends State<ProjectCreationSheet> {
   ];
 
   final Map<String, IconData> _typeIcons = {
+    'Inbox': Icons.inbox_outlined,
     'Grocery List': Icons.shopping_cart,
     'Dev Project': Icons.code,
     'Creative Writing': Icons.edit,

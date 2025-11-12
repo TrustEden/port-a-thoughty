@@ -10,6 +10,7 @@ import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart
 import 'screens/capture_screen.dart';
 import 'screens/docs_screen.dart';
 import 'screens/intro_screen.dart';
+import 'screens/onboarding_screen.dart';
 import 'screens/queue_screen.dart';
 import 'state/app_state.dart';
 import 'theme/app_theme.dart';
@@ -86,6 +87,7 @@ class _HomeShellState extends State<HomeShell> {
       final state = Provider.of<PortaThoughtyState>(context, listen: false);
       if (state.isReady && !state.settings.hasSeenIntro) {
         _hasCheckedIntro = true;
+        // Always show intro first - intro will navigate to onboarding if needed
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (context) => const IntroScreen(),
@@ -278,6 +280,7 @@ class _HomeShellState extends State<HomeShell> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && !_hasCheckedIntro) {
           _hasCheckedIntro = true;
+          // Always show intro first - intro will navigate to onboarding if needed
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (context) => const IntroScreen(),

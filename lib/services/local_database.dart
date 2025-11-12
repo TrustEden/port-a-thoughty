@@ -136,7 +136,7 @@ class LocalDatabase {
     await _ensureSchema(database);
   }
 
-  Future<Project> ensureDefaultProject() async {
+  Future<Project?> ensureDefaultProject() async {
     final db = _requireDb();
     final countResult = await db.rawQuery(
       'SELECT COUNT(*) as count FROM projects',
@@ -149,20 +149,9 @@ class LocalDatabase {
       return projects.first;
     }
 
-    final now = DateTime.now();
-    final inbox = Project(
-      id: 'inbox',
-      name: 'Inbox',
-      color: const Color(0xFF4A53FF),
-      icon: Icons.inbox_outlined,
-      description: null,
-      projectType: 'Inbox',
-      prompt: null, // System prompts are now stored in code, not in database
-      createdAt: now,
-      updatedAt: now,
-    );
-    await insertProject(inbox);
-    return inbox;
+    // No longer create a default Inbox project
+    // Let the user create their first project through onboarding
+    return null;
   }
 
   Future<void> insertProject(Project project) async {

@@ -308,6 +308,7 @@ class _ProjectManagementSheetState extends State<_ProjectManagementSheet> {
   String? _selectedType;
 
   final List<String> _projectTypes = [
+    'Inbox',
     'Grocery List',
     'Dev Project',
     'Creative Writing',

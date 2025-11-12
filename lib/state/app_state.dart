@@ -628,6 +628,12 @@ class PortaThoughtyState extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Syncs pending notes from widget recordings (public method for manual trigger)
+  Future<void> syncPendingNotesFromWidget() async {
+    await _syncPendingNotes();
+    notifyListeners();
+  }
+
   Future<void> _syncPendingNotes() async {
     try {
       // Get pending notes from Android SharedPreferences

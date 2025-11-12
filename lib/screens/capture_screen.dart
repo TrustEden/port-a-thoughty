@@ -271,64 +271,38 @@ class _QuickActionsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Row(
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: _QuickActionButton(
-                imageAsset: 'assets/written.png',
-                label: 'Add text note',
-                onTap: () => _openTextNoteComposer(context),
-                width: 31,
-                height: 31,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _QuickActionButton(
-                imageAsset: 'assets/camera.png',
-                label: 'Take photo',
-                onTap: () => _showOcrMock(context),
-                width: 36,
-                height: 36,
-              ),
-            ),
-          ],
+        Expanded(
+          child: _QuickActionButton(
+            imageAsset: 'assets/written.png',
+            label: 'Add text note',
+            onTap: () => _openTextNoteComposer(context),
+            width: 31,
+            height: 31,
+          ),
         ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _QuickActionButton(
-                imageAsset: 'assets/upload.png',
-                label: 'Upload files',
-                onTap: () => _showMultiImportMock(context),
-                width: 36,
-                height: 36,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _QuickActionButton(
-                imageAsset: 'assets/splashscreen.png',
-                label: 'New project',
-                onTap: () => _openProjectCreation(context),
-                width: 36,
-                height: 36,
-              ),
-            ),
-          ],
+        const SizedBox(width: 12),
+        Expanded(
+          child: _QuickActionButton(
+            imageAsset: 'assets/camera.png',
+            label: 'Take photo',
+            onTap: () => _showOcrMock(context),
+            width: 36,
+            height: 36,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _QuickActionButton(
+            imageAsset: 'assets/upload.png',
+            label: 'Upload files',
+            onTap: () => _showMultiImportMock(context),
+            width: 36,
+            height: 36,
+          ),
         ),
       ],
-    );
-  }
-
-  Future<void> _openProjectCreation(BuildContext context) async {
-    await showModalBottomSheet<void>(
-      isScrollControlled: true,
-      context: context,
-      builder: (context) => const ProjectCreationSheet(),
     );
   }
 

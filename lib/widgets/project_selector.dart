@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/project.dart';
+import '../screens/capture_screen.dart';
 import '../state/app_state.dart';
 import 'bottom_sheets.dart';
 
@@ -75,10 +76,25 @@ class ProjectSelector extends StatelessWidget {
                 const SizedBox(height: 14),
                 Row(
                   children: [
-                    Image.asset(
-                      'assets/projectsicon.png',
-                      width: 52,
-                      height: 52,
+                    InkWell(
+                      onTap: () {
+                        showModalBottomSheet<void>(
+                          isScrollControlled: true,
+                          context: context,
+                          builder: (context) => const ProjectCreationSheet(),
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(12),
+                      child: Semantics(
+                        label: 'New project',
+                        hint: 'Tap to create a new project',
+                        button: true,
+                        child: Image.asset(
+                          'assets/newproject.png',
+                          width: 52,
+                          height: 52,
+                        ),
+                      ),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
@@ -195,15 +211,30 @@ class ProjectSelector extends StatelessWidget {
               const SizedBox(height: 14),
               Row(
                 children: [
-                  Hero(
-                    tag: 'project-icon',
-                    child: Image.asset(
-                      'assets/projectsicon.png',
-                      width: 52,
-                      height: 52,
-                      cacheWidth: (52 * MediaQuery.of(context).devicePixelRatio).round(),
-                      cacheHeight: (52 * MediaQuery.of(context).devicePixelRatio).round(),
-                      gaplessPlayback: true,
+                  InkWell(
+                    onTap: () {
+                      showModalBottomSheet<void>(
+                        isScrollControlled: true,
+                        context: context,
+                        builder: (context) => const ProjectCreationSheet(),
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    child: Semantics(
+                      label: 'New project',
+                      hint: 'Tap to create a new project',
+                      button: true,
+                      child: Hero(
+                        tag: 'project-icon',
+                        child: Image.asset(
+                          'assets/newproject.png',
+                          width: 52,
+                          height: 52,
+                          cacheWidth: (52 * MediaQuery.of(context).devicePixelRatio).round(),
+                          cacheHeight: (52 * MediaQuery.of(context).devicePixelRatio).round(),
+                          gaplessPlayback: true,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 16),

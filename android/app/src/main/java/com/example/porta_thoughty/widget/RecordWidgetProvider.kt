@@ -48,32 +48,20 @@ class RecordWidgetProvider : AppWidgetProvider() {
             views.setImageViewResource(R.id.record_button, R.drawable.capture)
         }
 
-        // CRITICAL: Start foreground service directly from widget
-        // This uses the widget interaction exemption for Android 11+ microphone restrictions
-        val serviceIntent = Intent(context, com.example.porta_thoughty.BackgroundRecordingService::class.java).apply {
-            action = if (isRecording) {
-                com.example.porta_thoughty.BackgroundRecordingService.ACTION_STOP_RECORDING
-            } else {
-                com.example.porta_thoughty.BackgroundRecordingService.ACTION_START_RECORDING
-            }
+        // Launch recording activity directly from widget
+        // Android 15+ requires visible activity for microphone access ("while-in-use")
+        // The activity performs recording, saves offline, and auto-closes
+        val activityIntent = Intent(context, com.example.porta_thoughty.RecordingTrampolineActivity::class.java).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
         }
 
-        // Use getForegroundService for Android 12+ (API 31+), otherwise getService
-        val pendingIntent = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-            PendingIntent.getForegroundService(
-                context,
-                0,
-                serviceIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-        } else {
-            PendingIntent.getService(
-                context,
-                0,
-                serviceIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-        }
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            0,
+            activityIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
 
         views.setOnClickPendingIntent(R.id.record_button, pendingIntent)
 

@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:io';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
@@ -96,6 +98,12 @@ class _HomeShellState extends State<HomeShell> {
   }
 
   void _initSharingListener() {
+    // Share intents are only supported on Android and iOS
+    if (kIsWeb || (!Platform.isAndroid && !Platform.isIOS)) {
+      print('Share intents not supported on this platform');
+      return;
+    }
+
     // Handle media and text shared from other apps while app is running
     // Note: In receive_sharing_intent 1.8.1+, text is included in the media stream
     _intentMediaStreamSubscription = ReceiveSharingIntent.instance.getMediaStream().listen(
@@ -165,22 +173,31 @@ class _HomeShellState extends State<HomeShell> {
 
       if (isImage) {
         try {
-          // Perform OCR on the shared image
-          final inputImage = InputImage.fromFilePath(path);
-          final textRecognizer = TextRecognizer();
-          final recognizedText = await textRecognizer.processImage(inputImage);
-          await textRecognizer.close();
+          String ocrText = 'Shared image';
+
+          // OCR is only supported on Android and iOS
+          if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
+            // Perform OCR on the shared image
+            final inputImage = InputImage.fromFilePath(path);
+            final textRecognizer = TextRecognizer();
+            final recognizedText = await textRecognizer.processImage(inputImage);
+            await textRecognizer.close();
+
+            ocrText = recognizedText.text.isNotEmpty
+                ? recognizedText.text
+                : 'Image (no text detected)';
+          } else {
+            print('OCR not supported on this platform - skipping text recognition');
+          }
 
           // Create image note with OCR text
           await state.addImageNote(
-            ocrText: recognizedText.text.isNotEmpty
-                ? recognizedText.text
-                : 'Image (no text detected)',
+            ocrText: ocrText,
             includeImage: true,
             imagePath: path,
           );
 
-          print('Added shared image note with OCR: ${recognizedText.text}');
+          print('Added shared image note: $ocrText');
         } catch (e) {
           print('Error processing shared image: $e');
           // If OCR fails, still create a note with a placeholder

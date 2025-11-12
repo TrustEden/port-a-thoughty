@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart' as sqflite;
@@ -18,6 +19,13 @@ class LocalDatabase {
 
   Future<void> init() async {
     if (_db != null) return;
+
+    // Check for web platform - not currently supported
+    if (kIsWeb) {
+      throw UnsupportedError(
+        'Web platform is not yet supported. Please use the desktop or mobile app.',
+      );
+    }
 
     if (!Platform.isAndroid && !Platform.isIOS) {
       sqflite_ffi.sqfliteFfiInit();

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -382,7 +383,22 @@ class _QuickActionsRow extends StatelessWidget {
   Future<void> _showOcrMock(BuildContext context) async {
     final picker = ImagePicker();
 
-    // Pick image from camera
+    // Check if camera is available (mobile only)
+    final isDesktopOrWeb = kIsWeb || (!Platform.isAndroid && !Platform.isIOS);
+
+    if (isDesktopOrWeb) {
+      // On desktop/web, use file picker instead of camera
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Camera not available on this platform. Use "Upload Files" instead.'),
+          duration: Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
+
+    // Pick image from camera (mobile only)
     final XFile? photo = await picker.pickImage(
       source: ImageSource.camera,
       imageQuality: 85,
@@ -404,7 +420,7 @@ class _QuickActionsRow extends StatelessWidget {
 
     if (!context.mounted) return;
 
-    // Process OCR in background
+    // Process OCR in background (only on mobile)
     final ocrService = OcrService();
     String ocrText = '';
 
@@ -428,12 +444,15 @@ class _QuickActionsRow extends StatelessWidget {
     );
 
     if (!context.mounted) return;
+    final ocrSupported = !kIsWeb && (Platform.isAndroid || Platform.isIOS);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          result
-              ? 'Image + OCR note added to queue.'
-              : 'OCR text added to queue (image not included).',
+          ocrSupported
+              ? (result
+                  ? 'Image + OCR note added to queue.'
+                  : 'OCR text added to queue (image not included).')
+              : 'Image added to queue (OCR not supported on this platform).',
         ),
       ),
     );
@@ -612,19 +631,22 @@ class _QuickActionsRow extends StatelessWidget {
     if (!context.mounted) return;
 
     // Show loading indicator
+    final ocrSupported = !kIsWeb && (Platform.isAndroid || Platform.isIOS);
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(
+      builder: (context) => Center(
         child: Card(
           child: Padding(
-            padding: EdgeInsets.all(24.0),
+            padding: const EdgeInsets.all(24.0),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 16),
-                Text('Extracting text from image...'),
+                const CircularProgressIndicator(),
+                const SizedBox(height: 16),
+                Text(ocrSupported
+                    ? 'Extracting text from image...'
+                    : 'Processing image...'),
               ],
             ),
           ),
@@ -632,7 +654,7 @@ class _QuickActionsRow extends StatelessWidget {
       ),
     );
 
-    // Process OCR locally with Google ML Kit
+    // Process OCR locally with Google ML Kit (only on mobile)
     final ocrService = OcrService();
     String ocrText = '';
 
@@ -660,9 +682,13 @@ class _QuickActionsRow extends StatelessWidget {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          includeImage
-              ? 'Image + OCR note added to queue.'
-              : 'OCR text added to queue (image not included).',
+          ocrSupported
+              ? (includeImage
+                  ? 'Image + OCR note added to queue.'
+                  : 'OCR text added to queue (image not included).')
+              : (includeImage
+                  ? 'Image added to queue (OCR not supported on this platform).'
+                  : 'Image added to queue.'),
         ),
       ),
     );

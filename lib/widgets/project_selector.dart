@@ -89,10 +89,24 @@ class ProjectSelector extends StatelessWidget {
                         label: 'New project',
                         hint: 'Tap to create a new project',
                         button: true,
-                        child: Image.asset(
-                          'assets/newproject.png',
-                          width: 52,
-                          height: 52,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Image.asset(
+                              'assets/newproject.png',
+                              width: 52,
+                              height: 52,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'New project',
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                                color: theme.colorScheme.primary,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -224,16 +238,30 @@ class ProjectSelector extends StatelessWidget {
                       label: 'New project',
                       hint: 'Tap to create a new project',
                       button: true,
-                      child: Hero(
-                        tag: 'project-icon',
-                        child: Image.asset(
-                          'assets/newproject.png',
-                          width: 52,
-                          height: 52,
-                          cacheWidth: (52 * MediaQuery.of(context).devicePixelRatio).round(),
-                          cacheHeight: (52 * MediaQuery.of(context).devicePixelRatio).round(),
-                          gaplessPlayback: true,
-                        ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Hero(
+                            tag: 'project-icon',
+                            child: Image.asset(
+                              'assets/newproject.png',
+                              width: 52,
+                              height: 52,
+                              cacheWidth: (52 * MediaQuery.of(context).devicePixelRatio).round(),
+                              cacheHeight: (52 * MediaQuery.of(context).devicePixelRatio).round(),
+                              gaplessPlayback: true,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'New project',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w500,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),

@@ -43,7 +43,7 @@ class CaptureScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const ProjectSelector(),
-          const SizedBox(height: 20),
+          const SizedBox(height: 10),
           _SpeechCaptureCard(state: state),
           const SizedBox(height: 16),
           _QuickActionsRow(state: state),
@@ -937,19 +937,20 @@ class _ProjectCreationSheetState extends State<ProjectCreationSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-        left: 20,
-        right: 20,
-        top: 24,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Create new project', style: theme.textTheme.titleMedium),
-          const SizedBox(height: 16),
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+          left: 20,
+          right: 20,
+          top: 24,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Create new project', style: theme.textTheme.titleMedium),
+            const SizedBox(height: 16),
 
           // Project Type Dropdown
           DropdownButtonFormField<String>(
@@ -1049,6 +1050,7 @@ class _ProjectCreationSheetState extends State<ProjectCreationSheet> {
             ],
           ),
         ],
+        ),
       ),
     );
   }

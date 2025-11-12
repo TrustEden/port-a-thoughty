@@ -4,68 +4,172 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
+import android.speech.RecognitionListener
+import android.speech.RecognizerIntent
+import android.speech.SpeechRecognizer
 import android.util.Log
-import android.view.Window
-import android.view.WindowManager
+import android.widget.TextView
 
 /**
- * Trampoline activity to start the recording service.
+ * Recording activity that handles voice capture while visible.
  *
- * CRITICAL: For microphone-type foreground services, Android requires
- * the activity to be ACTUALLY VISIBLE (not just transparent) due to
- * "while-in-use" permission restrictions. This activity shows briefly
- * (500ms) to satisfy that requirement.
+ * This approach satisfies Android 15's "while-in-use" requirement for
+ * microphone access - the activity must be visible during recording.
  *
- * From Android docs: "You cannot create a microphone foreground service
- * while your app is in the background, even if the app falls into one
- * of the exemptions from background start restrictions."
+ * Flow:
+ * 1. Widget tap → Activity opens
+ * 2. Activity shows "Recording..." UI and starts speech recognition
+ * 3. User speaks, then stops (8 sec silence)
+ * 4. Note is saved to database
+ * 5. Activity auto-closes
  */
 class RecordingTrampolineActivity : Activity() {
 
-    companion object {
-        const val EXTRA_IS_RECORDING = "isRecording"
-        const val VISIBILITY_DELAY_MS = 1000L // Must be visible for while-in-use permission
-    }
+    private var speechRecognizer: SpeechRecognizer? = null
+    private var statusText: TextView? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        // Set actual content view to be FULLY visible (required for microphone while-in-use)
         setContentView(R.layout.activity_recording_trampoline)
 
-        Log.d("RecordingTrampoline", "onCreate: Starting service with VISIBLE activity")
+        statusText = findViewById(R.id.recording_status)
 
-        val isRecording = intent.getBooleanExtra(EXTRA_IS_RECORDING, false)
+        Log.d("RecordingActivity", "onCreate: Starting recording")
+        startRecording()
+    }
 
-        val serviceIntent = Intent(this, BackgroundRecordingService::class.java).apply {
-            action = if (isRecording) {
-                BackgroundRecordingService.ACTION_STOP_RECORDING
-            } else {
-                BackgroundRecordingService.ACTION_START_RECORDING
-            }
+    private fun startRecording() {
+        // Check if speech recognition is available
+        if (!SpeechRecognizer.isRecognitionAvailable(this)) {
+            Log.e("RecordingActivity", "Speech recognition not available")
+            updateStatus("Speech recognition not available")
+            BackgroundRecordingService.savePendingNote(
+                this,
+                "[Error: Speech recognition not available on this device]",
+                "inbox"
+            )
+            finishWithDelay(2000)
+            return
         }
 
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                Log.d("RecordingTrampoline", "Starting foreground service while fully visible")
-                startForegroundService(serviceIntent)
-            } else {
-                Log.d("RecordingTrampoline", "Starting service")
-                startService(serviceIntent)
+        updateStatus("Listening...")
+
+        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this).apply {
+            setRecognitionListener(object : RecognitionListener {
+                override fun onReadyForSpeech(params: Bundle?) {
+                    Log.d("RecordingActivity", "Ready for speech")
+                    runOnUiThread { updateStatus("Listening...") }
+                }
+
+                override fun onBeginningOfSpeech() {
+                    Log.d("RecordingActivity", "Speech started")
+                    runOnUiThread { updateStatus("Recording...") }
+                }
+
+                override fun onRmsChanged(rmsdB: Float) {}
+
+                override fun onBufferReceived(buffer: ByteArray?) {}
+
+                override fun onEndOfSpeech() {
+                    Log.d("RecordingActivity", "Speech ended")
+                    runOnUiThread { updateStatus("Processing...") }
+                }
+
+                override fun onError(error: Int) {
+                    Log.e("RecordingActivity", "Speech recognition error: $error")
+                    val errorMessage = getErrorMessage(error)
+                    runOnUiThread { updateStatus(errorMessage) }
+
+                    // Only save error notes for actual errors, not timeouts
+                    if (error != SpeechRecognizer.ERROR_SPEECH_TIMEOUT &&
+                        error != SpeechRecognizer.ERROR_NO_MATCH) {
+                        BackgroundRecordingService.savePendingNote(
+                            this@RecordingTrampolineActivity,
+                            "[Recording error: $errorMessage]",
+                            "inbox"
+                        )
+                    }
+
+                    finishWithDelay(2000)
+                }
+
+                override fun onResults(results: Bundle?) {
+                    val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                    val transcription = matches?.firstOrNull() ?: ""
+
+                    if (transcription.isNotEmpty()) {
+                        Log.d("RecordingActivity", "Transcription: $transcription")
+                        runOnUiThread { updateStatus("Saved!") }
+                        BackgroundRecordingService.savePendingNote(
+                            this@RecordingTrampolineActivity,
+                            transcription,
+                            "inbox"
+                        )
+                    } else {
+                        runOnUiThread { updateStatus("No speech detected") }
+                    }
+
+                    finishWithDelay(1000)
+                }
+
+                override fun onPartialResults(partialResults: Bundle?) {}
+
+                override fun onEvent(eventType: Int, params: Bundle?) {}
+            })
+
+            val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, packageName)
+                putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
+                putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 8000L)
+                putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 8000L)
             }
 
-            // Keep activity visible for 1 second to establish "foreground" status
-            // This satisfies Android's while-in-use requirement for microphone services
-            Handler(Looper.getMainLooper()).postDelayed({
-                Log.d("RecordingTrampoline", "Finishing activity after visibility period")
-                finish()
-            }, VISIBILITY_DELAY_MS)
+            try {
+                startListening(intent)
+                Log.d("RecordingActivity", "Speech recognition started")
+            } catch (e: Exception) {
+                Log.e("RecordingActivity", "Failed to start listening", e)
+                runOnUiThread { updateStatus("Failed to start recording") }
+                BackgroundRecordingService.savePendingNote(
+                    this@RecordingTrampolineActivity,
+                    "[Error: Failed to start recording - ${e.message}]",
+                    "inbox"
+                )
+                finishWithDelay(2000)
+            }
+        }
+    }
 
-        } catch (e: Exception) {
-            Log.e("RecordingTrampoline", "Failed to start service", e)
+    private fun updateStatus(message: String) {
+        statusText?.text = message
+    }
+
+    private fun getErrorMessage(error: Int): String {
+        return when (error) {
+            SpeechRecognizer.ERROR_AUDIO -> "Audio recording error"
+            SpeechRecognizer.ERROR_CLIENT -> "Client error"
+            SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> "Insufficient permissions"
+            SpeechRecognizer.ERROR_NETWORK -> "Network error"
+            SpeechRecognizer.ERROR_NETWORK_TIMEOUT -> "Network timeout"
+            SpeechRecognizer.ERROR_NO_MATCH -> "No speech detected"
+            SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> "Recognition service busy"
+            SpeechRecognizer.ERROR_SERVER -> "Server error"
+            SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "No speech input"
+            else -> "Unknown error"
+        }
+    }
+
+    private fun finishWithDelay(delayMs: Long) {
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
             finish()
-        }
+        }, delayMs)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        speechRecognizer?.destroy()
+        speechRecognizer = null
+        Log.d("RecordingActivity", "Activity destroyed")
     }
 }

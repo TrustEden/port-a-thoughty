@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../state/app_state.dart';
 import '../theme/app_theme.dart';
+import 'onboarding_screen.dart';
 
 class IntroScreen extends StatefulWidget {
   const IntroScreen({super.key});
@@ -29,7 +30,18 @@ class _IntroScreenState extends State<IntroScreen> {
   Future<void> _onFinish() async {
     final state = context.read<PortaThoughtyState>();
     await state.markIntroAsSeen();
-    if (mounted) {
+
+    if (!mounted) return;
+
+    // If no projects exist, navigate to onboarding instead of just closing
+    if (state.projects.isEmpty) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => const OnboardingScreen(),
+          fullscreenDialog: true,
+        ),
+      );
+    } else {
       Navigator.of(context).pop();
     }
   }

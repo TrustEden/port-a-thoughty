@@ -36,8 +36,9 @@ class CaptureScreen extends StatelessWidget {
       });
     }
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 140),
+    return SingleChildScrollView(
+      physics: const ClampingScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -46,6 +47,7 @@ class CaptureScreen extends StatelessWidget {
           _SpeechCaptureCard(state: state),
           const SizedBox(height: 16),
           _QuickActionsRow(state: state),
+          const SizedBox(height: 120), // Extra space for bottom nav
         ],
       ),
     );

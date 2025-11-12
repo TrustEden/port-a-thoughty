@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../state/app_state.dart';
+import '../theme/app_theme.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -132,19 +133,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              theme.colorScheme.primary.withValues(alpha: 0.1),
-              theme.colorScheme.surface,
-            ],
-          ),
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: AppTheme.backgroundGradient,
         ),
-        child: SafeArea(
+      ),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(24.0),
             child: Column(
@@ -156,6 +155,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   'Welcome to Porta-Thoughty',
                   style: theme.textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                    shadows: [
+                      Shadow(
+                        offset: const Offset(0, 2),
+                        blurRadius: 8,
+                        color: Colors.black.withValues(alpha: 0.5),
+                      ),
+                    ],
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -163,7 +170,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 Text(
                   'Let\'s set up your first project',
                   style: theme.textTheme.bodyLarge?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+                    color: Colors.white,
+                    shadows: [
+                      Shadow(
+                        offset: const Offset(0, 1),
+                        blurRadius: 6,
+                        color: Colors.black.withValues(alpha: 0.4),
+                      ),
+                    ],
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -193,19 +207,26 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           onPressed: _previousStep,
                           style: OutlinedButton.styleFrom(
                             minimumSize: const Size.fromHeight(56),
+                            backgroundColor: Colors.white.withValues(alpha: 0.2),
+                            foregroundColor: Colors.white,
+                            side: const BorderSide(color: Colors.white, width: 2),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
                             ),
                           ),
-                          child: const Text('Back'),
+                          child: const Text('Back', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                         ),
                       ),
                     if (_currentStep > 0) const SizedBox(width: 12),
                     Expanded(
-                      child: FilledButton(
+                      child: ElevatedButton(
                         onPressed: _canProceed ? _nextStep : null,
-                        style: FilledButton.styleFrom(
+                        style: ElevatedButton.styleFrom(
                           minimumSize: const Size.fromHeight(56),
+                          backgroundColor: Colors.white,
+                          foregroundColor: const Color(0xFF4A53FF),
+                          disabledBackgroundColor: Colors.white.withValues(alpha: 0.5),
+                          disabledForegroundColor: const Color(0xFF4A53FF).withValues(alpha: 0.5),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
@@ -216,10 +237,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                 width: 24,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  color: Colors.white,
+                                  color: Color(0xFF4A53FF),
                                 ),
                               )
-                            : Text(_currentStep == 0 ? 'Next' : 'Create Project'),
+                            : Text(_currentStep == 0 ? 'Next' : 'Create Project', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                       ),
                     ),
                   ],
@@ -233,7 +254,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Widget _buildProgressDot(int step) {
-    final theme = Theme.of(context);
     final isActive = step == _currentStep;
     final isCompleted = step < _currentStep;
 
@@ -243,8 +263,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       height: 12,
       decoration: BoxDecoration(
         color: isActive || isCompleted
-            ? theme.colorScheme.primary
-            : theme.colorScheme.primary.withValues(alpha: 0.3),
+            ? Colors.white
+            : Colors.white.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(6),
       ),
     );
@@ -260,13 +280,28 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             'What kind of notes will you capture?',
             style: theme.textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w600,
+              color: Colors.white,
+              shadows: [
+                Shadow(
+                  offset: const Offset(0, 2),
+                  blurRadius: 8,
+                  color: Colors.black.withValues(alpha: 0.5),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 8),
           Text(
             'Choose the type that best matches your use case',
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+              color: Colors.white,
+              shadows: [
+                Shadow(
+                  offset: const Offset(0, 1),
+                  blurRadius: 6,
+                  color: Colors.black.withValues(alpha: 0.4),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 24),
@@ -352,13 +387,28 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             'Name your project',
             style: theme.textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w600,
+              color: Colors.white,
+              shadows: [
+                Shadow(
+                  offset: const Offset(0, 2),
+                  blurRadius: 8,
+                  color: Colors.black.withValues(alpha: 0.5),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 8),
           Text(
             'Give it a meaningful name to help organize your thoughts',
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+              color: Colors.white,
+              shadows: [
+                Shadow(
+                  offset: const Offset(0, 1),
+                  blurRadius: 6,
+                  color: Colors.black.withValues(alpha: 0.4),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 24),

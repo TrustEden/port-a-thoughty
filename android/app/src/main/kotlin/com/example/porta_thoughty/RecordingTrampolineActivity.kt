@@ -26,24 +26,16 @@ class RecordingTrampolineActivity : Activity() {
 
     companion object {
         const val EXTRA_IS_RECORDING = "isRecording"
-        const val VISIBILITY_DELAY_MS = 500L // Must be visible for while-in-use permission
+        const val VISIBILITY_DELAY_MS = 1000L // Must be visible for while-in-use permission
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Make window visible but minimally intrusive
-        requestWindowFeature(Window.FEATURE_NO_TITLE)
-        window.setFlags(
-            WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
-            WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
-        )
-        window.setFlags(
-            WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
-            WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH
-        )
+        // Set actual content view to be FULLY visible (required for microphone while-in-use)
+        setContentView(R.layout.activity_recording_trampoline)
 
-        Log.d("RecordingTrampoline", "onCreate: Starting service")
+        Log.d("RecordingTrampoline", "onCreate: Starting service with VISIBLE activity")
 
         val isRecording = intent.getBooleanExtra(EXTRA_IS_RECORDING, false)
 
@@ -57,14 +49,14 @@ class RecordingTrampolineActivity : Activity() {
 
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                Log.d("RecordingTrampoline", "Starting foreground service while visible")
+                Log.d("RecordingTrampoline", "Starting foreground service while fully visible")
                 startForegroundService(serviceIntent)
             } else {
                 Log.d("RecordingTrampoline", "Starting service")
                 startService(serviceIntent)
             }
 
-            // Keep activity visible for 500ms to establish "foreground" status
+            // Keep activity visible for 1 second to establish "foreground" status
             // This satisfies Android's while-in-use requirement for microphone services
             Handler(Looper.getMainLooper()).postDelayed({
                 Log.d("RecordingTrampoline", "Finishing activity after visibility period")

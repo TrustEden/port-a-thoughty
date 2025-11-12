@@ -18,24 +18,19 @@ class WidgetClickReceiver : BroadcastReceiver() {
         if (intent.action == ACTION_WIDGET_CLICK) {
             val isRecording = intent.getBooleanExtra(EXTRA_IS_RECORDING, false)
 
-            val serviceIntent = Intent(context, BackgroundRecordingService::class.java).apply {
-                action = if (isRecording) {
-                    BackgroundRecordingService.ACTION_STOP_RECORDING
-                } else {
-                    BackgroundRecordingService.ACTION_START_RECORDING
-                }
+            // Start the trampoline activity which will start the service
+            // This is necessary for Android 14+ FGS restrictions
+            val activityIntent = Intent(context, RecordingTrampolineActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
+                putExtra(RecordingTrampolineActivity.EXTRA_IS_RECORDING, isRecording)
             }
 
             try {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    Log.d("WidgetClickReceiver", "Starting foreground service (API 26+)")
-                    context.startForegroundService(serviceIntent)
-                } else {
-                    Log.d("WidgetClickReceiver", "Starting service (API < 26)")
-                    context.startService(serviceIntent)
-                }
+                Log.d("WidgetClickReceiver", "Starting trampoline activity")
+                context.startActivity(activityIntent)
             } catch (e: Exception) {
-                Log.e("WidgetClickReceiver", "Failed to start service", e)
+                Log.e("WidgetClickReceiver", "Failed to start activity", e)
             }
         }
     }

@@ -48,18 +48,33 @@ class RecordWidgetProvider : AppWidgetProvider() {
             views.setImageViewResource(R.id.record_button, R.drawable.capture)
         }
 
-        // Set up click handler to trigger BroadcastReceiver
-        val clickIntent = Intent(context, WidgetClickReceiver::class.java).apply {
-            action = WidgetClickReceiver.ACTION_WIDGET_CLICK
-            putExtra(WidgetClickReceiver.EXTRA_IS_RECORDING, isRecording)
+        // CRITICAL: Start foreground service directly from widget
+        // This uses the widget interaction exemption for Android 11+ microphone restrictions
+        val serviceIntent = Intent(context, com.example.porta_thoughty.BackgroundRecordingService::class.java).apply {
+            action = if (isRecording) {
+                com.example.porta_thoughty.BackgroundRecordingService.ACTION_STOP_RECORDING
+            } else {
+                com.example.porta_thoughty.BackgroundRecordingService.ACTION_START_RECORDING
+            }
         }
 
-        val pendingIntent = PendingIntent.getBroadcast(
-            context,
-            0,
-            clickIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
+        // Use getForegroundService for Android 12+ (API 31+), otherwise getService
+        val pendingIntent = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            PendingIntent.getForegroundService(
+                context,
+                0,
+                serviceIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+        } else {
+            PendingIntent.getService(
+                context,
+                0,
+                serviceIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+        }
+
         views.setOnClickPendingIntent(R.id.record_button, pendingIntent)
 
         appWidgetManager.updateAppWidget(appWidgetId, views)

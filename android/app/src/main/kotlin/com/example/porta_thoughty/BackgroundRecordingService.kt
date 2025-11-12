@@ -151,7 +151,18 @@ class BackgroundRecordingService : Service() {
 
         android.util.Log.d("BackgroundRecordingService", "Starting foreground service with notification")
         isRecording = true
-        startForeground(NOTIFICATION_ID, createNotification(true))
+
+        // For Android 14+ (API 34+), specify the foreground service type
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            startForeground(
+                NOTIFICATION_ID,
+                createNotification(true),
+                android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
+            )
+        } else {
+            startForeground(NOTIFICATION_ID, createNotification(true))
+        }
+
         updateWidget(true)
 
         android.util.Log.d("BackgroundRecordingService", "Creating SpeechRecognizer")

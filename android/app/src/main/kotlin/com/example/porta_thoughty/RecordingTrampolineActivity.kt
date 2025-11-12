@@ -7,23 +7,42 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import android.view.Window
+import android.view.WindowManager
 
 /**
- * Transparent trampoline activity to start the recording service.
- * This is necessary for Android 14+ where starting foreground services
- * from the background (even from widgets) is restricted.
+ * Trampoline activity to start the recording service.
  *
- * Activities can start foreground services, so this activity acts as
- * a bridge between the widget and the service.
+ * CRITICAL: For microphone-type foreground services, Android requires
+ * the activity to be ACTUALLY VISIBLE (not just transparent) due to
+ * "while-in-use" permission restrictions. This activity shows briefly
+ * (500ms) to satisfy that requirement.
+ *
+ * From Android docs: "You cannot create a microphone foreground service
+ * while your app is in the background, even if the app falls into one
+ * of the exemptions from background start restrictions."
  */
 class RecordingTrampolineActivity : Activity() {
 
     companion object {
         const val EXTRA_IS_RECORDING = "isRecording"
+        const val VISIBILITY_DELAY_MS = 500L // Must be visible for while-in-use permission
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Make window visible but minimally intrusive
+        requestWindowFeature(Window.FEATURE_NO_TITLE)
+        window.setFlags(
+            WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+            WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+        )
+        window.setFlags(
+            WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
+            WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH
+        )
+
         Log.d("RecordingTrampoline", "onCreate: Starting service")
 
         val isRecording = intent.getBooleanExtra(EXTRA_IS_RECORDING, false)
@@ -38,20 +57,19 @@ class RecordingTrampolineActivity : Activity() {
 
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                Log.d("RecordingTrampoline", "Starting foreground service")
+                Log.d("RecordingTrampoline", "Starting foreground service while visible")
                 startForegroundService(serviceIntent)
             } else {
                 Log.d("RecordingTrampoline", "Starting service")
                 startService(serviceIntent)
             }
 
-            // Delay finishing to give service time to call startForeground()
-            // This is critical for Android 14+ - the activity must be "visible"
-            // when startForeground() is called
+            // Keep activity visible for 500ms to establish "foreground" status
+            // This satisfies Android's while-in-use requirement for microphone services
             Handler(Looper.getMainLooper()).postDelayed({
-                Log.d("RecordingTrampoline", "Finishing activity after delay")
+                Log.d("RecordingTrampoline", "Finishing activity after visibility period")
                 finish()
-            }, 300) // 300ms delay
+            }, VISIBILITY_DELAY_MS)
 
         } catch (e: Exception) {
             Log.e("RecordingTrampoline", "Failed to start service", e)

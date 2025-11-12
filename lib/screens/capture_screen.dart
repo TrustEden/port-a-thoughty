@@ -43,7 +43,7 @@ class CaptureScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const ProjectSelector(),
-          const SizedBox(height: 20),
+          const SizedBox(height: 10),
           _SpeechCaptureCard(state: state),
           const SizedBox(height: 16),
           _QuickActionsRow(state: state),

@@ -19,12 +19,23 @@ class MainActivity : FlutterActivity() {
         // Widget channel
         methodChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
         methodChannel.setMethodCallHandler { call, result ->
-            if (call.method == "updateWidget") {
-                val isRecording = call.argument<Boolean>("isRecording") ?: false
-                updateRecordWidget(this, isRecording)
-                result.success(null)
-            } else {
-                result.notImplemented()
+            when (call.method) {
+                "updateWidget" -> {
+                    val isRecording = call.argument<Boolean>("isRecording") ?: false
+                    updateRecordWidget(this, isRecording)
+                    result.success(null)
+                }
+                "getPendingNotes" -> {
+                    val notes = BackgroundRecordingService.getPendingNotes(this)
+                    result.success(notes)
+                }
+                "clearPendingNotes" -> {
+                    BackgroundRecordingService.clearPendingNotes(this)
+                    result.success(null)
+                }
+                else -> {
+                    result.notImplemented()
+                }
             }
         }
 

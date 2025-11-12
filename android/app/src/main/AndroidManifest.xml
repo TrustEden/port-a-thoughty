@@ -65,6 +65,12 @@
             <meta-data android:name="android.appwidget.provider"
                 android:resource="@xml/record_widget_info" />
         </receiver>
+
+        <service
+            android:name=".BackgroundRecordingService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="microphone" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

@@ -621,8 +621,57 @@ class PortaThoughtyState extends ChangeNotifier {
       _docs = [];
     }
 
+    // Sync pending notes from widget recordings
+    await _syncPendingNotes();
+
     _ready = true;
     notifyListeners();
+  }
+
+  Future<void> _syncPendingNotes() async {
+    try {
+      // Get pending notes from Android SharedPreferences
+      final result = await platform.invokeMethod('getPendingNotes');
+
+      if (result != null && result is List && result.isNotEmpty) {
+        print('Found ${result.length} pending notes to sync');
+
+        // Process each pending note
+        for (final noteData in result) {
+          if (noteData is Map) {
+            final transcription = noteData['transcription'] as String?;
+            final projectId = noteData['projectId'] as String? ?? 'inbox';
+            final timestamp = noteData['timestamp'] as int?;
+
+            if (transcription != null && transcription.isNotEmpty) {
+              // Create note with the widget recording timestamp
+              final note = Note(
+                projectId: projectId,
+                type: NoteType.voice,
+                text: transcription,
+                createdAt: timestamp != null
+                    ? DateTime.fromMillisecondsSinceEpoch(timestamp)
+                    : DateTime.now(),
+              );
+
+              await _database.insertNote(note);
+              print('Synced pending note: $transcription');
+            }
+          }
+        }
+
+        // Reload notes to include the synced ones
+        _notes = await _database.fetchActiveNotes(_activeProjectId);
+
+        // Clear pending notes after successful sync
+        await platform.invokeMethod('clearPendingNotes');
+        print('Cleared pending notes after sync');
+      }
+    } on PlatformException catch (e) {
+      print('Failed to sync pending notes: ${e.message}');
+    } catch (e) {
+      print('Error syncing pending notes: $e');
+    }
   }
 
   Future<void> _ensureInitialized() async {

@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
@@ -12,6 +13,7 @@ class DocGenerator {
   DocGenerator();
 
   /// Saves a Markdown document for the given [notes] and returns the file path.
+  /// Note: Not supported on web platform
   Future<String> saveMarkdown({
     required Project project,
     required String title,
@@ -20,6 +22,13 @@ class DocGenerator {
   }) async {
     if (notes.isEmpty) {
       throw ArgumentError.value(notes, 'notes', 'At least one note required.');
+    }
+
+    // Check for web platform - not currently supported
+    if (kIsWeb) {
+      throw UnsupportedError(
+        'Document generation is not yet supported on web. Please use the desktop or mobile app.',
+      );
     }
 
     final markdown = await _composeMarkdown(
